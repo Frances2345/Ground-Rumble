@@ -76,7 +76,7 @@ namespace GroundRumble.Level
                 foreach (Vector3 corner in corners)
                 {
                     GameObject col = Instantiate(columnPrefab, transform);
-                    col.transform.localPosition = corner;
+                    col.transform.localPosition = corner + Vector3.up * (height * 0.5f);
                     col.transform.localScale = new Vector3(1f, height, 1f);
                 }
             }

@@ -133,6 +133,7 @@ GameObject:
   - component: {fileID: 28242398}
   - component: {fileID: 28242403}
   - component: {fileID: 28242402}
+  - component: {fileID: 28242404}
   m_Layer: 0
   m_Name: player
   m_TagString: Untagged
@@ -290,6 +291,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &28242404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28242397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79e078bd52dd46e48b8f10e4569b5483, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Player.PlayerHealth
+  maxHealth: 100
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -517,6 +531,7 @@ GameObject:
   - component: {fileID: 424652034}
   - component: {fileID: 424652033}
   - component: {fileID: 424652032}
+  - component: {fileID: 424652035}
   m_Layer: 0
   m_Name: colupnas(Clone) (3)
   m_TagString: Untagged
@@ -524,6 +539,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &424652035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 424652030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84601bca8d704478a41da419abd44cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Events.SafeZone
+  radius: 1.5
+  groundOffset: 0.5
+  checkInterval: 0.1
 --- !u!4 &424652031
 Transform:
   m_ObjectHideFlags: 0
@@ -629,6 +659,7 @@ GameObject:
   - component: {fileID: 449385600}
   - component: {fileID: 449385599}
   - component: {fileID: 449385598}
+  - component: {fileID: 449385601}
   m_Layer: 0
   m_Name: colupnas(Clone)
   m_TagString: Untagged
@@ -636,6 +667,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &449385601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 449385596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84601bca8d704478a41da419abd44cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Events.SafeZone
+  radius: 1.5
+  groundOffset: 0.5
+  checkInterval: 0.1
 --- !u!4 &449385597
 Transform:
   m_ObjectHideFlags: 0
@@ -1077,6 +1123,7 @@ GameObject:
   - component: {fileID: 684932824}
   - component: {fileID: 684932823}
   - component: {fileID: 684932822}
+  - component: {fileID: 684932825}
   m_Layer: 0
   m_Name: colupnas(Clone) (4)
   m_TagString: Untagged
@@ -1084,6 +1131,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &684932825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 684932820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84601bca8d704478a41da419abd44cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Events.SafeZone
+  radius: 1.5
+  groundOffset: 0.5
+  checkInterval: 0.1
 --- !u!4 &684932821
 Transform:
   m_ObjectHideFlags: 0
@@ -1345,6 +1407,7 @@ GameObject:
   - component: {fileID: 974350231}
   - component: {fileID: 974350230}
   - component: {fileID: 974350229}
+  - component: {fileID: 974350232}
   m_Layer: 0
   m_Name: colupnas(Clone) (2)
   m_TagString: Untagged
@@ -1352,6 +1415,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &974350232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 974350227}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84601bca8d704478a41da419abd44cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Events.SafeZone
+  radius: 1.5
+  groundOffset: 0.5
+  checkInterval: 0.1
 --- !u!4 &974350228
 Transform:
   m_ObjectHideFlags: 0
@@ -1457,6 +1535,7 @@ GameObject:
   - component: {fileID: 1036424884}
   - component: {fileID: 1036424883}
   - component: {fileID: 1036424882}
+  - component: {fileID: 1036424885}
   m_Layer: 0
   m_Name: colupnas(Clone)
   m_TagString: Untagged
@@ -1464,6 +1543,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1036424885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1036424880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84601bca8d704478a41da419abd44cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Events.SafeZone
+  radius: 1.5
+  groundOffset: 0.5
+  checkInterval: 0.1
 --- !u!4 &1036424881
 Transform:
   m_ObjectHideFlags: 0
@@ -1752,6 +1846,7 @@ GameObject:
   - component: {fileID: 1672908330}
   - component: {fileID: 1672908329}
   - component: {fileID: 1672908328}
+  - component: {fileID: 1672908331}
   m_Layer: 0
   m_Name: colupnas(Clone)
   m_TagString: Untagged
@@ -1759,6 +1854,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1672908331
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1672908326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84601bca8d704478a41da419abd44cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Events.SafeZone
+  radius: 1.5
+  groundOffset: 0.5
+  checkInterval: 0.1
 --- !u!4 &1672908327
 Transform:
   m_ObjectHideFlags: 0
@@ -2088,6 +2198,7 @@ GameObject:
   - component: {fileID: 1872528123}
   - component: {fileID: 1872528122}
   - component: {fileID: 1872528121}
+  - component: {fileID: 1872528124}
   m_Layer: 0
   m_Name: colupnas(Clone) (1)
   m_TagString: Untagged
@@ -2095,6 +2206,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1872528124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1872528119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84601bca8d704478a41da419abd44cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Events.SafeZone
+  radius: 1.5
+  groundOffset: 0.5
+  checkInterval: 0.1
 --- !u!4 &1872528120
 Transform:
   m_ObjectHideFlags: 0
@@ -2200,6 +2326,7 @@ GameObject:
   - component: {fileID: 2003616775}
   - component: {fileID: 2003616774}
   - component: {fileID: 2003616773}
+  - component: {fileID: 2003616776}
   m_Layer: 0
   m_Name: colupnas(Clone)
   m_TagString: Untagged
@@ -2207,6 +2334,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &2003616776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2003616771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84601bca8d704478a41da419abd44cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Events.SafeZone
+  radius: 1.5
+  groundOffset: 0.5
+  checkInterval: 0.1
 --- !u!4 &2003616772
 Transform:
   m_ObjectHideFlags: 0
@@ -2921,6 +3063,83 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5e97180a7ecdae94dbe26a98ca93748d, type: 3}
+--- !u!1 &1900000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1900000002}
+  - component: {fileID: 1900000003}
+  - component: {fileID: 1900000004}
+  m_Layer: 0
+  m_Name: EarthquakeSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1900000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1900000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5beed28e05ddae4da9a69c216aa97b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Events.EarthquakeSystem
+  firstShakeDelay: 3
+  shakeInterval: 12
+  shakeDuration: 2.5
+  intensity: 0.25
+  frequency: 20
+  damagePerSecond: 5
+--- !u!114 &1900000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03fbfa88f64a4b238b6fc9b172acf9ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Events.DebrisSpawner
+  debrisPrefabs:
+  - {fileID: 6843172206240283114, guid: cdcb3a3063c3d2f45a8a8a7daf794048, type: 3}
+  - {fileID: 1539469417360365529, guid: 0fb550ea435305a43acc83e0b5019a6b, type: 3}
+  - {fileID: 3168835154637758097, guid: 99137f54bff17da47b85f9c8da1903b1, type: 3}
+  ceilingArea: {fileID: 558121962}
+  ceilingMargin: 1
+  spawnHeightOffset: 0.5
+  piecesPerShake: 10
+  spawnStagger: 0.12
+  maxSpawnAttempts: 40
+  columnClearance: 1.5
+  pieceMass: 0.5
+  randomTorque: 3
+  pieceLifetime: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2930,3 +3149,4 @@ SceneRoots:
   - {fileID: 439770046284670488}
   - {fileID: 28242401}
   - {fileID: 1360877857}
+  - {fileID: 1900000002}

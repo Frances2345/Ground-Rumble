@@ -1,4 +1,5 @@
 using System.Collections;
+using GroundRumble.Player;
 using UnityEngine;
 
 namespace GroundRumble.Events
@@ -16,15 +17,30 @@ namespace GroundRumble.Events
         [SerializeField] private float intensity = 0.25f;
         [SerializeField] private float frequency = 20f;
 
+        [Header("Damage")]
+        [SerializeField] private float damagePerSecond = 5f;
+
         public bool IsShaking { get; private set; }
+        public bool IsPlayerSafe => SafeZone.IsPlayerSafe;
+
+        private Transform cameraTransform;
+        private Vector3 cameraBaseLocalPosition;
+        private PlayerHealth playerHealth;
 
         private void Awake()
         {
             Current = this;
+            playerHealth = FindAnyObjectByType<PlayerHealth>();
         }
 
         private void Start()
         {
+            cameraTransform = Camera.main != null ? Camera.main.transform : null;
+            if (cameraTransform != null)
+            {
+                cameraBaseLocalPosition = cameraTransform.localPosition;
+            }
+
             StartCoroutine(ShakeLoop());
         }
 
@@ -45,6 +61,7 @@ namespace GroundRumble.Events
             while (time < shakeDuration)
             {
                 SetCameraShake(time);
+                ApplyDamage();
                 time += Time.deltaTime;
                 yield return null;
             }
@@ -54,23 +71,31 @@ namespace GroundRumble.Events
 
         private void SetCameraShake(float time)
         {
-            Transform cam = Camera.main == null ? null : Camera.main.transform;
-            if (cam == null)
+            if (cameraTransform == null)
             {
                 return;
             }
             float ox = Mathf.PerlinNoise(time * frequency, 0f) - 0.5f;
             float oy = Mathf.PerlinNoise(time * frequency, 10f) - 0.5f;
             float oz = Mathf.PerlinNoise(time * frequency, 20f) - 0.5f;
-            cam.localPosition = new Vector3(ox, oy, oz) * intensity;
+            cameraTransform.localPosition = cameraBaseLocalPosition + new Vector3(ox, oy, oz) * intensity;
+        }
+
+        private void ApplyDamage()
+        {
+            if (playerHealth == null || SafeZone.IsPlayerSafe)
+            {
+                return;
+            }
+
+            playerHealth.TakeDamage(damagePerSecond * Time.deltaTime);
         }
 
         private void ResetCamera()
         {
-            Transform cam = Camera.main == null ? null : Camera.main.transform;
-            if (cam != null)
+            if (cameraTransform != null)
             {
-                cam.localPosition = Vector3.zero;
+                cameraTransform.localPosition = cameraBaseLocalPosition;
             }
         }
     }
