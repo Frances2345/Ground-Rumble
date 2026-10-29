@@ -1,70 +1,137 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(CapsuleCollider))]
 public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerActions
 {
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float sprintSpeed = 8f;
     [SerializeField] private float crouchSpeed = 2.5f;
-    [SerializeField] private float rotationSpeed = 10f;
-    [SerializeField] private float gravity = -9.81f;
-    [SerializeField] private float jumpHeight = 1.5f;
+    [SerializeField] private float jumpSpeed = 5f;
 
     [Header("Crouch")]
     [SerializeField] private float standingHeight = 2f;
     [SerializeField] private float crouchingHeight = 1f;
-    [SerializeField] private Vector3 standingCenter = new Vector3(0, 1f, 0);
-    [SerializeField] private Vector3 crouchingCenter = new Vector3(0, 0.5f, 0);
+    [SerializeField] private float standingEyeHeight = 1.6f;
+    [SerializeField] private float crouchingEyeHeight = 0.9f;
 
-    private CharacterController characterController;
+    [Header("Look")]
+    [SerializeField] private float mouseSensitivity = 0.1f;
+    [SerializeField] private float pitchMin = -80f;
+    [SerializeField] private float pitchMax = 80f;
+
+    [Header("Stamina")]
+    [SerializeField] private float maxStamina = 100f;
+    [SerializeField] private float staminaDrain = 25f;
+    [SerializeField] private float staminaRegen = 15f;
+    [SerializeField] private float minStaminaToSprint = 10f;
+
+    private Rigidbody rb;
+    private CapsuleCollider capsule;
     private InputSystem_Actions inputActions;
     private Transform cameraTransform;
 
     private Vector2 moveInput;
-    private Vector3 velocity;
+    private Vector2 lookInput;
     private bool isSprinting;
     private bool isCrouching;
     private bool isGrounded;
+    private bool jumpRequested;
+    private float pitch;
+    private float currentStamina;
 
     private void Awake()
     {
-        characterController = GetComponent<CharacterController>();
+        rb = GetComponent<Rigidbody>();
+        capsule = GetComponent<CapsuleCollider>();
         inputActions = new InputSystem_Actions();
         cameraTransform = Camera.main != null ? Camera.main.transform : null;
 
-        characterController.height = standingHeight;
-        characterController.center = standingCenter;
+        currentStamina = maxStamina;
+
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+
+        // No forzar FPS: usar la tasa de refresco del monitor
+        Application.targetFrameRate = -1;
+        QualitySettings.vSyncCount = 0;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
+        rb.useGravity = true;
+
+        capsule.height = standingHeight;
+        capsule.center = Vector3.zero;
+        capsule.radius = 0.5f;
+
+        if (cameraTransform != null)
+        {
+            cameraTransform.localPosition = new Vector3(0f, standingEyeHeight, 0f);
+            cameraTransform.localRotation = Quaternion.identity;
+        }
     }
 
     private void OnEnable()
     {
         inputActions.Player.Enable();
         inputActions.Player.AddCallbacks(this);
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void OnDisable()
     {
         inputActions.Player.Disable();
         inputActions.Player.RemoveCallbacks(this);
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     private void Update()
     {
-        isGrounded = characterController.isGrounded;
+        // Ground check
+        isGrounded = Physics.Raycast(transform.position, Vector3.down, (standingHeight * 0.5f) + 0.15f);
 
-        if (isGrounded && velocity.y < 0)
+        // Look
+        if (lookInput.sqrMagnitude > 0f)
         {
-            velocity.y = -2f;
+            float yaw = lookInput.x * mouseSensitivity;
+            float pitchDelta = lookInput.y * mouseSensitivity;
+
+            transform.Rotate(Vector3.up * yaw);
+            pitch = Mathf.Clamp(pitch - pitchDelta, pitchMin, pitchMax);
+
+            if (cameraTransform != null)
+            {
+                cameraTransform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+            }
         }
 
+        // Stamina
+        if (isSprinting && moveInput.sqrMagnitude > 0f && !isCrouching)
+        {
+            currentStamina = Mathf.Max(0f, currentStamina - staminaDrain * Time.deltaTime);
+            if (currentStamina <= 0f)
+            {
+                isSprinting = false;
+            }
+        }
+        else
+        {
+            currentStamina = Mathf.Min(maxStamina, currentStamina + staminaRegen * Time.deltaTime);
+        }
+    }
+
+    private void FixedUpdate()
+    {
         Vector3 moveDirection = Vector3.zero;
 
         if (moveInput != Vector2.zero)
         {
-            Vector3 forward = cameraTransform != null ? cameraTransform.forward : transform.forward;
-            Vector3 right = cameraTransform != null ? cameraTransform.right : transform.right;
+            Vector3 forward = transform.forward;
+            Vector3 right = transform.right;
 
             forward.y = 0f;
             right.y = 0f;
@@ -80,21 +147,25 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
         {
             currentSpeed = crouchSpeed;
         }
-        else if (isSprinting)
+        else if (isSprinting && currentStamina > minStaminaToSprint)
         {
             currentSpeed = sprintSpeed;
         }
 
-        characterController.Move(moveDirection * currentSpeed * Time.deltaTime);
+        Vector3 horizontalVelocity = moveDirection * currentSpeed;
+        rb.angularVelocity = Vector3.zero;
 
-        if (moveDirection != Vector3.zero)
+        Vector3 velocity = rb.linearVelocity;
+        velocity.x = horizontalVelocity.x;
+        velocity.z = horizontalVelocity.z;
+
+        if (jumpRequested && isGrounded)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            velocity.y = jumpSpeed;
+            jumpRequested = false;
         }
 
-        velocity.y += gravity * Time.deltaTime;
-        characterController.Move(velocity * Time.deltaTime);
+        rb.linearVelocity = velocity;
     }
 
     public void OnMove(InputAction.CallbackContext context)
@@ -104,6 +175,14 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
 
     public void OnLook(InputAction.CallbackContext context)
     {
+        if (context.performed)
+        {
+            lookInput = context.ReadValue<Vector2>();
+        }
+        else if (context.canceled)
+        {
+            lookInput = Vector2.zero;
+        }
     }
 
     public void OnAttack(InputAction.CallbackContext context)
@@ -126,7 +205,7 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
     {
         if (context.performed && isGrounded && !isCrouching)
         {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            jumpRequested = true;
         }
     }
 
@@ -142,7 +221,10 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
     {
         if (context.performed)
         {
-            isSprinting = true;
+            if (currentStamina > minStaminaToSprint)
+            {
+                isSprinting = true;
+            }
         }
         else if (context.canceled)
         {
@@ -156,14 +238,28 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
 
         if (isCrouching)
         {
-            characterController.height = crouchingHeight;
-            characterController.center = crouchingCenter;
+            capsule.height = crouchingHeight;
+            capsule.center = new Vector3(0f, crouchingHeight * 0.5f, 0f);
             isSprinting = false;
+
+            if (cameraTransform != null)
+            {
+                cameraTransform.localPosition = new Vector3(0f, crouchingEyeHeight, 0f);
+            }
         }
         else
         {
-            characterController.height = standingHeight;
-            characterController.center = standingCenter;
+            capsule.height = standingHeight;
+            capsule.center = Vector3.zero;
+
+            if (cameraTransform != null)
+            {
+                cameraTransform.localPosition = new Vector3(0f, standingEyeHeight, 0f);
+            }
         }
     }
+
+    public float CurrentStamina => currentStamina;
+    public float MaxStamina => maxStamina;
+    public bool IsCrouching => isCrouching;
 }
