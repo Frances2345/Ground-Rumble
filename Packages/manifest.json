@@ -1,10 +1,6 @@
 {
   "dependencies": {
-<<<<<<< Updated upstream
-    "com.coplaydev.unity-mcp": "file:E:/Nueva carpeta (2)/unity-mcp-10.3.0/unity-mcp-10.3.0/MCPForUnity",
-=======
     "com.coplaydev.unity-mcp": "file:C:/Users/Alumno/Downloads/unity-mcp-10.3.0/unity-mcp-10.3.0/MCPForUnity",
->>>>>>> Stashed changes
     "com.unity.ai.navigation": "2.0.14",
     "com.unity.collab-proxy": "2.13.6",
     "com.unity.ide.rider": "3.0.38",

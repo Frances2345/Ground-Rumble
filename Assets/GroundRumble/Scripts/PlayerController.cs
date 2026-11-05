@@ -8,7 +8,6 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float sprintSpeed = 8f;
     [SerializeField] private float crouchSpeed = 2.5f;
-    [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private float gravity = -9.81f;
     [SerializeField] private float jumpHeight = 1.5f;
 
@@ -18,12 +17,18 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
     [SerializeField] private Vector3 standingCenter = new Vector3(0, 1f, 0);
     [SerializeField] private Vector3 crouchingCenter = new Vector3(0, 0.5f, 0);
 
+    [Header("Look")]
+    [SerializeField] private float mouseSensitivity = 0.12f;
+    [SerializeField] private float pitchMin = -85f;
+    [SerializeField] private float pitchMax = 85f;
+
     private CharacterController characterController;
     private InputSystem_Actions inputActions;
     private Transform cameraTransform;
 
     private Vector2 moveInput;
     private Vector3 velocity;
+    private float pitch;
     private bool isSprinting;
     private bool isCrouching;
     private bool isGrounded;
@@ -36,6 +41,14 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
 
         characterController.height = standingHeight;
         characterController.center = standingCenter;
+
+        if (cameraTransform != null)
+        {
+            cameraTransform.localRotation = Quaternion.identity;
+        }
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void OnEnable()
@@ -87,12 +100,6 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
 
         characterController.Move(moveDirection * currentSpeed * Time.deltaTime);
 
-        if (moveDirection != Vector3.zero)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-        }
-
         velocity.y += gravity * Time.deltaTime;
         characterController.Move(velocity * Time.deltaTime);
     }
@@ -104,6 +111,14 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
 
     public void OnLook(InputAction.CallbackContext context)
     {
+        Vector2 look = context.ReadValue<Vector2>();
+        transform.Rotate(Vector3.up, look.x * mouseSensitivity, Space.Self);
+
+        pitch = Mathf.Clamp(pitch - look.y * mouseSensitivity, pitchMin, pitchMax);
+        if (cameraTransform != null)
+        {
+            cameraTransform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        }
     }
 
     public void OnAttack(InputAction.CallbackContext context)

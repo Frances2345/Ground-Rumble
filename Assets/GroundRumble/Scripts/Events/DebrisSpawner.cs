@@ -31,6 +31,7 @@ namespace GroundRumble.Events
         private RoomGenerator building;
         private Transform player;
         private Collider ceilingCollider;
+        private Material debrisMaterial;
         private bool wasShaking;
         private bool burstRunning;
         private int nextPrefabIndex;
@@ -44,6 +45,7 @@ namespace GroundRumble.Events
             }
 
             building = FindAnyObjectByType<RoomGenerator>();
+            debrisMaterial = CreateDebrisMaterial();
 
             PlayerController playerController = FindAnyObjectByType<PlayerController>();
             if (playerController != null)
@@ -146,6 +148,8 @@ namespace GroundRumble.Events
                 Random.Range(0f, 360f));
 
             GameObject piece = Instantiate(prefab, spawnPoint, rotation, transform);
+            ApplyMaterial(piece, debrisMaterial);
+
             Rigidbody body = piece.GetComponent<Rigidbody>();
             if (body == null)
             {
@@ -299,6 +303,48 @@ namespace GroundRumble.Events
             }
 
             return false;
+        }
+
+        private static Material CreateDebrisMaterial()
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+            {
+                shader = Shader.Find("Standard");
+            }
+
+            Material material = new Material(shader);
+            material.name = "Debris (Runtime)";
+            material.color = new Color(0.45f, 0.42f, 0.38f);
+            if (material.HasProperty("_Smoothness"))
+            {
+                material.SetFloat("_Smoothness", 0.05f);
+            }
+            else if (material.HasProperty("_Glossiness"))
+            {
+                material.SetFloat("_Glossiness", 0.05f);
+            }
+
+            if (material.HasProperty("_Metallic"))
+            {
+                material.SetFloat("_Metallic", 0f);
+            }
+
+            return material;
+        }
+
+        private static void ApplyMaterial(GameObject target, Material material)
+        {
+            if (target == null || material == null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = target.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                renderers[i].sharedMaterial = material;
+            }
         }
 
         private void OnDrawGizmosSelected()

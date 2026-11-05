@@ -119,6 +119,105 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &28242397
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 28242401}
+  - component: {fileID: 28242405}
+  - component: {fileID: 28242402}
+  - component: {fileID: 28242404}
+  m_Layer: 0
+  m_Name: player
+  m_TagString: Player
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!143 &28242405
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28242397}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 1, z: 0}
+  m_Direction: 1
+--- !u!114 &28242402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28242397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c880b6d5ce35ea147a46a0b66a596460, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  walkSpeed: 5
+  sprintSpeed: 8
+  crouchSpeed: 2.5
+  gravity: -9.81
+  jumpHeight: 1.5
+  standingHeight: 2
+  crouchingHeight: 1
+  standingCenter: {x: 0, y: 1, z: 0}
+  crouchingCenter: {x: 0, y: 0.5, z: 0}
+  mouseSensitivity: 0.12
+  pitchMin: -85
+  pitchMax: 85
+--- !u!114 &28242404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28242397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79e078bd52dd46e48b8f10e4569b5483, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Player.PlayerHealth
+  maxHealth: 100
+--- !u!4 &28242401
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28242397}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 330585546}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -206,11 +305,11 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: 1.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 28242401}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
@@ -423,8 +522,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-<<<<<<< Updated upstream
-=======
 --- !u!1 &974350227
 GameObject:
   m_ObjectHideFlags: 0
@@ -692,7 +789,7 @@ GameObject:
   - component: {fileID: 1360877857}
   - component: {fileID: 1360877856}
   m_Layer: 0
-  m_Name: Room)
+  m_Name: Room
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -716,34 +813,36 @@ MonoBehaviour:
   columnPrefab: {fileID: 7186065322925833344, guid: 1631d7c2d07d7c240a54634e9ab00bc3, type: 3}
   generateOnStart: 1
   floors: 30
-  width: 20
-  depth: 20
-  height: 6
+  width: 50
+  depth: 50
+  height: 12
   slabThickness: 0.5
   wallThickness: 0.3
   generateStairs: 1
-  stairHoleLength: 5
-  stairHoleWidth: 3.5
-  stairHoleInset: 4
-  rampRun: 10
-  rampWidth: 3
+  corridorWidth: 8
+  stairHoleLength: 8
+  stairHoleWidth: 4.5
+  stairAlongOffset: 2.5
+  rampRun: 18
+  rampWidth: 3.6
   generateRooms: 1
-  partitionInset: 6.5
-  partitionLength: 3
-  windowsPerWall: 2
-  windowWidth: 3
-  windowHeight: 2.5
-  windowSillHeight: 1.5
+  doorwayWidth: 4
+  doorwayOffsetRatio: 0.65
+  hubHalf: 3
+  windowsPerWall: 4
+  windowWidth: 4
+  windowHeight: 3.5
+  windowSillHeight: 2
   glassColor: {r: 0.55, g: 0.75, b: 0.9, a: 0.18}
   windowBreakChance: 0.75
-  windowBreakRadius: 16
+  windowBreakRadius: 20
   windowShardCount: 6
   windowShardLifetime: 4
   windowDamage: 12
   windowDamageRadius: 3
   generateLights: 1
   floorLightIntensity: 1.1
-  floorLightRange: 17
+  floorLightRange: 40
   floorLightColor: {r: 1, g: 0.95, b: 0.85, a: 1}
   movePlayerToTop: 1
 --- !u!4 &1360877857
@@ -755,30 +854,23 @@ Transform:
   m_GameObject: {fileID: 1360877855}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10.86902, y: -0.27826, z: 1.20578}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 558121962}
   - {fileID: 1793314067}
   - {fileID: 1786473985}
   - {fileID: 2076070587}
-  - {fileID: 688314643}
   - {fileID: 2117876956}
   - {fileID: 1482386336}
-  - {fileID: 589769308}
-  - {fileID: 682069635}
   - {fileID: 2125143363}
   - {fileID: 2098250483}
   - {fileID: 2115415881}
   - {fileID: 2003616772}
   - {fileID: 1872528120}
-  - {fileID: 449385597}
   - {fileID: 974350228}
   - {fileID: 1672908327}
   - {fileID: 1036424881}
-  - {fileID: 424652031}
-  - {fileID: 684932821}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1482386335
@@ -2189,7 +2281,7 @@ MonoBehaviour:
   - {fileID: 6843172206240283114, guid: cdcb3a3063c3d2f45a8a8a7daf794048, type: 3}
   - {fileID: 1539469417360365529, guid: 0fb550ea435305a43acc83e0b5019a6b, type: 3}
   - {fileID: 3168835154637758097, guid: 99137f54bff17da47b85f9c8da1903b1, type: 3}
-  ceilingArea: {fileID: 558121962}
+  ceilingArea: {fileID: 0}
   ceilingMargin: 1
   spawnHeightOffset: 0.5
   piecesPerShake: 10
@@ -2200,11 +2292,12 @@ MonoBehaviour:
   pieceMass: 0.5
   randomTorque: 3
   pieceLifetime: 10
->>>>>>> Stashed changes
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 832575519}
+  - {fileID: 28242401}
+  - {fileID: 1360877857}
+  - {fileID: 1900000002}
