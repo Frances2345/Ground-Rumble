@@ -1,7 +1,11 @@
 {
   "dependencies": {
     "com.coplaydev.unity-mcp": {
+<<<<<<< Updated upstream
       "version": "file:E:/Nueva carpeta (2)/unity-mcp-10.3.0/unity-mcp-10.3.0/MCPForUnity",
+=======
+      "version": "file:C:/Users/Alumno/Downloads/unity-mcp-10.3.0/unity-mcp-10.3.0/MCPForUnity",
+>>>>>>> Stashed changes
       "depth": 0,
       "source": "local",
       "dependencies": {
