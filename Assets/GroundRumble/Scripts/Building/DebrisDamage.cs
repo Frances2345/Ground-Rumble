@@ -30,7 +30,7 @@ namespace GroundRumble
 
         private void OnCollisionEnter(Collision collision)
         {
-            PlayerHealth health = collision.collider.GetComponentInParent<PlayerHealth>();
+            Vida health = collision.collider.GetComponentInParent<Vida>();
 
             if (health != null)
             {
@@ -38,7 +38,7 @@ namespace GroundRumble
             }
         }
 
-        public void TryHitPlayer(PlayerHealth health)
+        public void TryHitPlayer(Vida health)
         {
             if (health == null || Time.time - lastHitTime < damageCooldown)
             {

@@ -12,7 +12,7 @@ namespace GroundRumble
     {
         [Header("Movimiento")]
         [SerializeField] private float walkSpeed = 4.5f;
-        [SerializeField] private float sprintSpeed = 7.5f;
+        [SerializeField] private float sprintSpeed = 8.6f;
         [SerializeField] private float crouchSpeed = 2f;
         [SerializeField] private float rotationSpeed = 12f;
         [SerializeField] private float gravity = -20f;
@@ -27,15 +27,24 @@ namespace GroundRumble
         [SerializeField] private float crouchCameraHeight = 1.05f;
         [SerializeField] private bool toggleCrouch = false;
 
+        [Header("Resbalones en el terremoto")]
+        [SerializeField] private float slipCheckInterval = 0.45f;
+        [Range(0f, 1f)]
+        [SerializeField] private float slipChance = 0.35f;
+        [Range(0f, 1f)]
+        [SerializeField] private float slipDamagePercent = 0.10f;
+        [SerializeField] private float slipLockDuration = 0.5f;
+        [SerializeField] private float slipKnockback = 3.5f;
+
         [Header("Referencias")]
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private Transform cameraTransform;
-        [SerializeField] private PlayerStamina stamina;
-        [SerializeField] private PlayerHealth health;
+        [SerializeField] private Stamina stamina;
+        [SerializeField] private Vida health;
 
         [Header("Depuracion")]
         [SerializeField] private bool enableFloorTeleport = true;
-        [SerializeField] private float floorHeight = 3.2f;
+        [SerializeField] private float floorHeight = 3.6f;
 
         private CharacterController characterController;
         private InputSystem_Actions inputActions;
@@ -48,17 +57,21 @@ namespace GroundRumble
         private bool isSprinting;
         private bool isGrounded;
         private bool controlEnabled = true;
+        private float slipCheckTimer;
+        private float slipLockTimer;
+        private Vector3 slipVelocity;
 
         public bool IsCrouching => isCrouching;
         public bool IsSprinting => isSprinting;
         public bool IsGrounded => isGrounded;
         public bool ControlEnabled => controlEnabled;
+        public bool IsSlipping => slipLockTimer > 0f;
 
         private void Awake()
         {
             characterController = GetComponent<CharacterController>();
-            stamina = stamina != null ? stamina : GetComponent<PlayerStamina>();
-            health = health != null ? health : GetComponent<PlayerHealth>();
+            stamina = stamina != null ? stamina : GetComponent<Stamina>();
+            health = health != null ? health : GetComponent<Vida>();
 
             inputActions = new InputSystem_Actions();
 
@@ -74,6 +87,13 @@ namespace GroundRumble
 
             characterController.height = standingHeight;
             characterController.center = standingCenter;
+            slipCheckTimer = slipCheckInterval;
+        }
+
+        public void ConfigureSprint(float speed, float floorHeightValue)
+        {
+            sprintSpeed = Mathf.Max(walkSpeed, speed);
+            floorHeight = Mathf.Max(0.1f, floorHeightValue);
         }
 
         private void OnEnable()
@@ -167,9 +187,27 @@ namespace GroundRumble
                 currentSpeed = sprintSpeed;
             }
 
-            characterController.Move(moveDirection * currentSpeed * Time.deltaTime);
+            if (isSprinting)
+            {
+                CheckSlip();
+            }
+            else if (slipCheckTimer > 0f)
+            {
+                slipCheckTimer = Mathf.Max(0f, slipCheckTimer - Time.deltaTime);
+            }
 
-            if (rotateTowardsMovement && moveDirection != Vector3.zero)
+            Vector3 horizontalMove = moveDirection * currentSpeed;
+
+            if (slipLockTimer > 0f)
+            {
+                slipLockTimer -= Time.deltaTime;
+                horizontalMove = slipVelocity;
+                slipVelocity = Vector3.Lerp(slipVelocity, Vector3.zero, Time.deltaTime * 4f);
+            }
+
+            characterController.Move(horizontalMove * Time.deltaTime);
+
+            if (rotateTowardsMovement && moveDirection != Vector3.zero && slipLockTimer <= 0f)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
@@ -179,6 +217,59 @@ namespace GroundRumble
             characterController.Move(velocity * Time.deltaTime);
 
             UpdateCameraHeight();
+        }
+
+        private void CheckSlip()
+        {
+            EarthquakeManager manager = EarthquakeManager.Instance;
+
+            if (manager == null || !manager.IsShaking || !isGrounded || IsSlipping)
+            {
+                return;
+            }
+
+            if (SafeZone.IsPositionSafe(transform.position))
+            {
+                return;
+            }
+
+            slipCheckTimer -= Time.deltaTime;
+
+            if (slipCheckTimer > 0f)
+            {
+                return;
+            }
+
+            slipCheckTimer = slipCheckInterval;
+
+            if (Random.value < slipChance)
+            {
+                TriggerSlip();
+            }
+        }
+
+        private void TriggerSlip()
+        {
+            slipLockTimer = slipLockDuration;
+
+            Vector2 direction = Random.insideUnitCircle;
+
+            if (direction.sqrMagnitude < 0.01f)
+            {
+                direction = Vector2.up;
+            }
+
+            direction.Normalize();
+            slipVelocity = new Vector3(direction.x, 0f, direction.y) * slipKnockback;
+
+            isSprinting = false;
+            sprintHeld = false;
+            stamina?.StopSprint();
+
+            if (health != null)
+            {
+                health.ApplyDamage(health.MaxHealth * slipDamagePercent, true);
+            }
         }
 
         private void UpdateCameraHeight()

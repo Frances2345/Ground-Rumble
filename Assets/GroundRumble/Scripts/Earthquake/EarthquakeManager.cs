@@ -34,7 +34,8 @@ namespace GroundRumble
 
         [Header("Configuracion del terremoto")]
         [SerializeField] private float warningDuration = 10f;
-        [SerializeField] private float earthquakeDuration = 15f;
+        [SerializeField] private float minEarthquakeDuration = 8f;
+        [SerializeField] private float maxEarthquakeDuration = 32f;
         [Range(0f, 1f)]
         [SerializeField] private float intensity = 0.6f;
 
@@ -50,10 +51,15 @@ namespace GroundRumble
             get => warningDuration;
             set => warningDuration = Mathf.Max(0f, value);
         }
-        public float EarthquakeDuration
+        public float MinEarthquakeDuration
         {
-            get => earthquakeDuration;
-            set => earthquakeDuration = Mathf.Max(0.1f, value);
+            get => minEarthquakeDuration;
+            set => minEarthquakeDuration = Mathf.Max(0.1f, value);
+        }
+        public float MaxEarthquakeDuration
+        {
+            get => maxEarthquakeDuration;
+            set => maxEarthquakeDuration = Mathf.Max(minEarthquakeDuration, value);
         }
         public float Intensity
         {
@@ -64,8 +70,9 @@ namespace GroundRumble
         public bool IsShaking => State == QuakeState.Shaking;
         public bool IsWarning => State == QuakeState.Warning;
         public float TimeUntilEarthquake => State == QuakeState.Warning ? Mathf.Max(0f, warningTimer) : 0f;
-        public float RemainingDuration => State == QuakeState.Shaking ? Mathf.Max(0f, earthquakeTimer) : 0f;
-        public float TotalDuration => earthquakeDuration;
+        public int WarningSecondsLeft => Mathf.CeilToInt(TimeUntilEarthquake);
+        public float CurrentDuration => currentEarthquakeDuration;
+        public float RemainingShakeDuration => State == QuakeState.Shaking ? Mathf.Max(0f, earthquakeTimer) : 0f;
 
         public event Action<float> OnWarningStarted;
         public event Action<float, float> OnEarthquakeStarted;
@@ -74,6 +81,7 @@ namespace GroundRumble
 
         private float warningTimer;
         private float earthquakeTimer;
+        private float currentEarthquakeDuration;
         private float repeatTimer;
         private bool hasPlayed;
 
@@ -181,11 +189,19 @@ namespace GroundRumble
         {
             if (State == QuakeState.Shaking)
             {
-                earthquakeTimer = earthquakeDuration;
+                currentEarthquakeDuration = RollDuration();
+                earthquakeTimer = currentEarthquakeDuration;
                 return;
             }
 
             StartShaking();
+        }
+
+        private float RollDuration()
+        {
+            float min = Mathf.Max(0.1f, minEarthquakeDuration);
+            float max = Mathf.Max(min, maxEarthquakeDuration);
+            return UnityEngine.Random.Range(min, max);
         }
 
         /// <summary>
@@ -208,13 +224,15 @@ namespace GroundRumble
         private void StartShaking()
         {
             SetState(QuakeState.Shaking);
-            earthquakeTimer = earthquakeDuration;
-            OnEarthquakeStarted?.Invoke(earthquakeDuration, intensity);
+            currentEarthquakeDuration = RollDuration();
+            earthquakeTimer = currentEarthquakeDuration;
+            OnEarthquakeStarted?.Invoke(currentEarthquakeDuration, intensity);
         }
 
         private void EndShaking()
         {
             earthquakeTimer = 0f;
+            currentEarthquakeDuration = 0f;
             hasPlayed = true;
             SetState(QuakeState.Idle);
             OnEarthquakeEnded?.Invoke();
