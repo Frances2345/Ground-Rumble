@@ -9,7 +9,19 @@ EditorBuildSettings:
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
+    path: Assets/Scenes/Opciones.unity
+    guid: a45512ee4c5171a41a8f49c4235b7e05
+  - enabled: 1
     path: Assets/Scenes/Final.unity
     guid: f8d4c2ebe24a17247b13369054a79c56
+  - enabled: 1
+    path: Assets/Scenes/GameOver.unity
+    guid: cbdcbd09d124185459909cc6ae85cd3a
+  - enabled: 1
+    path: Assets/Scenes/Menu.unity
+    guid: 4f9a2aa232a46e9438778d3f725f0f83
+  - enabled: 1
+    path: Assets/Scenes/Creditos.unity
+    guid: df340ced9785ec44290fa4dd261cd12d
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

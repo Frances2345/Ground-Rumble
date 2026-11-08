@@ -250,7 +250,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.Vida
   maxHealth: 100
   invulnerabilityTime: 0.25
-  respawnOnDeath: 1
+  respawnOnDeath: 0
   respawnDelay: 3
   quakeDamagePerSecond: 4
   healthBackground: {fileID: 0}
