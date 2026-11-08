@@ -116,11 +116,6 @@ namespace GroundRumble
         {
             if (staminaImage != null)
             {
-                if (staminaImage.sprite == null)
-                {
-                    staminaImage.sprite = UiSpriteFactory.WhiteSprite;
-                }
-
                 staminaImage.fillAmount = Normalized;
                 staminaImage.color = Color.Lerp(
                     new Color(0.95f, 0.75f, 0.15f),
@@ -145,11 +140,6 @@ namespace GroundRumble
                 return;
             }
 
-            if (image.sprite == null)
-            {
-                image.sprite = UiSpriteFactory.WhiteSprite;
-            }
-
             image.raycastTarget = false;
         }
 
@@ -158,11 +148,6 @@ namespace GroundRumble
             if (image == null)
             {
                 return;
-            }
-
-            if (image.sprite == null)
-            {
-                image.sprite = UiSpriteFactory.WhiteSprite;
             }
 
             image.type = Image.Type.Filled;

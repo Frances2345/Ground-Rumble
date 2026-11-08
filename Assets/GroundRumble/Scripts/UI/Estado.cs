@@ -6,39 +6,77 @@ namespace GroundRumble
 {
     public class Estado : MonoBehaviour
     {
+        public static Estado Instance { get; private set; }
+
+        [Header("Estado del terremoto (asignar en el inspector)")]
+        public TMP_Text stateText;
         public Image stateImage;
+        public Image stateFill;
+
+        [Header("Muerte (asignar en el inspector)")]
         public Image deathOverlay;
         public TMP_Text deathText;
 
         [Header("Indicador")]
         [SerializeField] private Color calmColor = new Color(0.2f, 0.9f, 0.35f);
         [SerializeField] private Color quakeColor = new Color(0.95f, 0.15f, 0.1f);
-        [SerializeField] private float calmScale = 0.55f;
-        [SerializeField] private float minQuakeScale = 0.9f;
-        [SerializeField] private float maxQuakeScale = 1.6f;
+        [SerializeField, Range(0f, 1f)] private float calmScale = 0.55f;
+        [SerializeField, Range(0f, 1f)] private float minQuakeScale = 0.9f;
+        [SerializeField, Range(0f, 1f)] private float maxQuakeScale = 1f;
         [SerializeField] private float scaleLerpSpeed = 6f;
         [SerializeField] private float colorLerpSpeed = 8f;
+        [SerializeField] private float pulseSpeed = 3f;
+        [SerializeField, Range(0f, 1f)] private float pulseAmount = 0.05f;
 
-        [Header("Temporizador")]
-        [SerializeField] private float gameDuration = 300f;
+        [Header("Textos de estado")]
+        [SerializeField] private string calmMessage = "Por ahora todo es calma";
+        [SerializeField] private string quakeMessage = "TERREMOTO EN PROGRESO";
 
-        [Header("Muerte")]
+        [Header("Mensaje de muerte")]
         [SerializeField, TextArea(1, 2)] private string deathMessage = "HAZ MUERTO";
 
         public bool IsGameOver { get; private set; }
-        public float GameDuration => gameDuration;
-        public float TimeLeft => timeLeft;
+        public string DeathMessage => deathMessage;
 
         private EarthquakeManager manager;
         private PlayerController player;
         private RectTransform stateRect;
-        private float timeLeft;
+        private Vector3 stateBaseScale = Vector3.one;
+        private bool hasStateBaseScale;
 
         private void Awake()
         {
-            timeLeft = Mathf.Max(0f, gameDuration);
-            ResolveReferences();
-            EnsureDeathUI();
+            Instance = this;
+            player = FindAnyObjectByType<PlayerController>();
+            ResolveStateRect();
+
+            if (deathOverlay != null)
+            {
+                deathOverlay.gameObject.SetActive(false);
+            }
+
+            if (deathText != null && string.IsNullOrEmpty(deathText.text))
+            {
+                deathText.text = deathMessage;
+            }
+
+            UpdateStateText();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
+        public void ConfigureUI(Image state, Image overlay, TMP_Text text)
+        {
+            stateImage = state;
+            deathOverlay = overlay;
+            deathText = text;
+            ResolveStateRect();
 
             if (deathOverlay != null)
             {
@@ -51,17 +89,10 @@ namespace GroundRumble
             }
         }
 
-        public void ConfigureUI(Image state, Image overlay, TMP_Text text)
+        public void ConfigureStatusUI(TMP_Text text, Image fill)
         {
-            stateImage = state;
-            deathOverlay = overlay;
-            deathText = text;
-            ResolveStateRect();
-
-            if (deathText != null && string.IsNullOrEmpty(deathText.text))
-            {
-                deathText.text = deathMessage;
-            }
+            stateText = text;
+            stateFill = fill;
         }
 
         private void Update()
@@ -71,20 +102,10 @@ namespace GroundRumble
                 manager = EarthquakeManager.Instance;
             }
 
+            ResolveStateRect();
             UpdateStateImage();
-
-            if (IsGameOver || gameDuration <= 0f)
-            {
-                return;
-            }
-
-            timeLeft -= Time.deltaTime;
-
-            if (timeLeft <= 0f)
-            {
-                timeLeft = 0f;
-                TriggerDeath();
-            }
+            UpdateStateText();
+            UpdateStateFill();
         }
 
         private void UpdateStateImage()
@@ -94,31 +115,82 @@ namespace GroundRumble
                 return;
             }
 
-            ResolveStateRect();
-
             bool shaking = manager != null && manager.IsShaking;
             Color targetColor = shaking ? quakeColor : calmColor;
-            float targetScale = calmScale;
+            float targetScale = Mathf.Clamp01(calmScale);
 
             if (shaking)
             {
                 float total = Mathf.Max(0.01f, manager.CurrentDuration);
                 float remaining = Mathf.Clamp01(manager.RemainingShakeDuration / total);
-                targetScale = Mathf.Lerp(minQuakeScale, maxQuakeScale, remaining);
+                float minFactor = Mathf.Clamp01(Mathf.Min(minQuakeScale, maxQuakeScale));
+                float maxFactor = Mathf.Clamp01(Mathf.Max(minQuakeScale, maxQuakeScale));
+                targetScale = Mathf.Lerp(minFactor, maxFactor, remaining);
+
+                if (pulseAmount > 0f)
+                {
+                    float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * Mathf.Max(0.01f, pulseSpeed));
+                    targetScale *= 1f - Mathf.Clamp01(pulseAmount) * pulse;
+                }
             }
 
+            targetScale = Mathf.Clamp01(targetScale);
             stateImage.color = Color.Lerp(stateImage.color, targetColor, Time.deltaTime * colorLerpSpeed);
 
             if (stateRect != null)
             {
+                Vector3 targetLocalScale = stateBaseScale * targetScale;
                 stateRect.localScale = Vector3.Lerp(
                     stateRect.localScale,
-                    Vector3.one * targetScale,
+                    targetLocalScale,
                     Time.deltaTime * scaleLerpSpeed);
             }
         }
 
-        public void TriggerDeath()
+        private void UpdateStateText()
+        {
+            if (stateText == null)
+            {
+                return;
+            }
+
+            bool shaking = manager != null && manager.IsShaking;
+            stateText.text = shaking ? quakeMessage : calmMessage;
+            stateText.color = Color.Lerp(
+                stateText.color,
+                shaking ? quakeColor : calmColor,
+                Time.deltaTime * colorLerpSpeed);
+        }
+
+        private void UpdateStateFill()
+        {
+            if (stateFill == null)
+            {
+                return;
+            }
+
+            bool shaking = manager != null && manager.IsShaking;
+            float target = 1f;
+
+            if (shaking)
+            {
+                float total = Mathf.Max(0.01f, manager.CurrentDuration);
+                target = Mathf.Clamp01(manager.RemainingShakeDuration / total);
+            }
+
+            stateFill.fillAmount = Mathf.Lerp(stateFill.fillAmount, target, Time.deltaTime * colorLerpSpeed);
+            stateFill.color = Color.Lerp(
+                stateFill.color,
+                shaking ? quakeColor : calmColor,
+                Time.deltaTime * colorLerpSpeed);
+        }
+
+        public void ShowDeath()
+        {
+            ShowDeath(deathMessage);
+        }
+
+        public void ShowDeath(string message)
         {
             if (IsGameOver)
             {
@@ -126,7 +198,11 @@ namespace GroundRumble
             }
 
             IsGameOver = true;
-            timeLeft = 0f;
+
+            if (manager == null)
+            {
+                manager = EarthquakeManager.Instance;
+            }
 
             if (manager != null)
             {
@@ -153,114 +229,36 @@ namespace GroundRumble
 
             if (deathText != null)
             {
-                if (string.IsNullOrEmpty(deathText.text))
-                {
-                    deathText.text = deathMessage;
-                }
-
+                deathText.text = string.IsNullOrEmpty(message) ? deathMessage : message;
                 deathText.gameObject.SetActive(true);
                 deathText.transform.SetAsLastSibling();
             }
         }
 
-        private void ResolveReferences()
+        public void TriggerDeath()
         {
-            if (player == null)
-            {
-                player = FindAnyObjectByType<PlayerController>();
-            }
-
-            if (stateImage == null)
-            {
-                Transform found = transform.Find("Indicador_Estado");
-
-                if (found != null)
-                {
-                    stateImage = found.GetComponent<Image>();
-                }
-            }
-
-            if (deathOverlay == null)
-            {
-                Transform found = transform.Find("Pantalla_Muerte");
-
-                if (found != null)
-                {
-                    deathOverlay = found.GetComponent<Image>();
-                }
-            }
-
-            if (deathText == null && deathOverlay != null)
-            {
-                deathText = deathOverlay.GetComponentInChildren<TMP_Text>(true);
-            }
-
-            ResolveStateRect();
+            ShowDeath(deathMessage);
         }
 
         private void ResolveStateRect()
         {
-            if (stateImage != null)
+            if (stateImage == null)
             {
-                stateRect = stateImage.rectTransform;
-            }
-        }
-
-        private void EnsureDeathUI()
-        {
-            Transform parent = transform;
-
-            if (deathOverlay == null)
-            {
-                Canvas canvas = GetComponentInParent<Canvas>();
-
-                if (canvas != null)
-                {
-                    parent = canvas.transform;
-                }
-
-                GameObject overlayObject = new GameObject("Pantalla_Muerte", typeof(RectTransform), typeof(Image));
-                overlayObject.transform.SetParent(parent, false);
-
-                RectTransform rect = overlayObject.GetComponent<RectTransform>();
-                rect.anchorMin = Vector2.zero;
-                rect.anchorMax = Vector2.one;
-                rect.offsetMin = Vector2.zero;
-                rect.offsetMax = Vector2.zero;
-
-                deathOverlay = overlayObject.GetComponent<Image>();
-                deathOverlay.sprite = UiSpriteFactory.WhiteSprite;
-                deathOverlay.color = Color.black;
-                deathOverlay.raycastTarget = false;
+                stateRect = null;
+                hasStateBaseScale = false;
+                return;
             }
 
-            if (deathText == null)
+            RectTransform rect = stateImage.rectTransform;
+
+            if (rect == stateRect && hasStateBaseScale)
             {
-                GameObject textObject = new GameObject("Texto_Muerte", typeof(RectTransform));
-                textObject.transform.SetParent(deathOverlay.transform, false);
-
-                RectTransform rect = textObject.GetComponent<RectTransform>();
-                rect.anchorMin = Vector2.zero;
-                rect.anchorMax = Vector2.one;
-                rect.offsetMin = Vector2.zero;
-                rect.offsetMax = Vector2.zero;
-
-                TextMeshProUGUI text = textObject.AddComponent<TextMeshProUGUI>();
-                text.font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
-
-                if (text.font == null)
-                {
-                    text.font = TMP_Settings.defaultFontAsset;
-                }
-
-                text.fontSize = 96f;
-                text.fontStyle = FontStyles.Bold;
-                text.alignment = TextAlignmentOptions.Center;
-                text.color = Color.white;
-                text.raycastTarget = false;
-                text.text = deathMessage;
-                deathText = text;
+                return;
             }
+
+            stateRect = rect;
+            stateBaseScale = rect.localScale;
+            hasStateBaseScale = true;
         }
     }
 }

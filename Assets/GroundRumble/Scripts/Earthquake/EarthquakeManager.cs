@@ -42,8 +42,8 @@ namespace GroundRumble
         [Header("Automatico")]
         [SerializeField] private bool autoStart = true;
         [SerializeField] private float autoStartDelay = 3f;
-        [SerializeField] private bool repeat = false;
-        [SerializeField] private float repeatDelay = 25f;
+        [SerializeField] private bool repeat = true;
+        [SerializeField] private float repeatDelay = 12f;
 
         public QuakeState State { get; private set; } = QuakeState.Idle;
         public float WarningDuration
@@ -154,7 +154,7 @@ namespace GroundRumble
 
                         if (repeatTimer <= 0f)
                         {
-                            StartSequence();
+                            StartShaking();
                         }
                     }
                     break;
@@ -219,6 +219,8 @@ namespace GroundRumble
             {
                 SetState(QuakeState.Idle);
             }
+
+            repeatTimer = 0f;
         }
 
         private void StartShaking()

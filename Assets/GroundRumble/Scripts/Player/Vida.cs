@@ -33,6 +33,12 @@ namespace GroundRumble
         public float Normalized => maxHealth <= 0f ? 0f : CurrentHealth / maxHealth;
         public bool IsDead { get; private set; }
 
+        public bool RespawnOnDeath
+        {
+            get => respawnOnDeath;
+            set => respawnOnDeath = value;
+        }
+
         public event Action<float, float> OnHealthChanged;
         public event Action OnDied;
         public event Action OnRespawned;
@@ -171,6 +177,19 @@ namespace GroundRumble
             UpdateUI();
         }
 
+        public void Kill()
+        {
+            if (IsDead)
+            {
+                return;
+            }
+
+            CurrentHealth = 0f;
+            OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
+            UpdateUI();
+            Die();
+        }
+
         private void Die()
         {
             IsDead = true;
@@ -227,11 +246,6 @@ namespace GroundRumble
         {
             if (healthImage != null)
             {
-                if (healthImage.sprite == null)
-                {
-                    healthImage.sprite = UiSpriteFactory.WhiteSprite;
-                }
-
                 healthImage.fillAmount = Normalized;
                 healthImage.color = Color.Lerp(
                     new Color(0.9f, 0.15f, 0.1f),
@@ -256,11 +270,6 @@ namespace GroundRumble
                 return;
             }
 
-            if (image.sprite == null)
-            {
-                image.sprite = UiSpriteFactory.WhiteSprite;
-            }
-
             image.raycastTarget = false;
         }
 
@@ -269,11 +278,6 @@ namespace GroundRumble
             if (image == null)
             {
                 return;
-            }
-
-            if (image.sprite == null)
-            {
-                image.sprite = UiSpriteFactory.WhiteSprite;
             }
 
             image.type = Image.Type.Filled;
