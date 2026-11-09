@@ -1,7 +1,5 @@
-using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace GroundRumble
 {
@@ -13,23 +11,15 @@ namespace GroundRumble
 
         [Header("UI (asignar en el inspector)")]
         public TMP_Text timerText;
-        public TMP_Text deathText;
-
-        [Header("Muerte")]
-        [SerializeField, TextArea(1, 2)] private string deathMessage = "HAS MUERTO";
-        [SerializeField] private string gameOverScene = "GameOver";
-        [SerializeField] private float delayBeforeGameOver = 2f;
 
         public float Duration => duration;
         public float TimeLeft { get; private set; }
         public bool IsRunning { get; private set; }
         public bool HasDied { get; private set; }
-        public string GameOverScene => gameOverScene;
 
         private EarthquakeManager manager;
         private PlayerController player;
         private Vida vida;
-        private Coroutine gameOverRoutine;
 
         private void Awake()
         {
@@ -81,10 +71,7 @@ namespace GroundRumble
 
         public void StartTimer()
         {
-            if (HasDied)
-            {
-                return;
-            }
+            if (HasDied) return;
 
             TimeLeft = Mathf.Max(0f, duration);
             IsRunning = true;
@@ -117,10 +104,7 @@ namespace GroundRumble
 
         private void HandleTimeUp()
         {
-            if (HasDied)
-            {
-                return;
-            }
+            if (HasDied) return;
 
             ResolveReferences();
             IsRunning = false;
@@ -138,82 +122,25 @@ namespace GroundRumble
 
         private void HandlePlayerDied()
         {
-            if (HasDied)
-            {
-                return;
-            }
+            if (HasDied) return;
 
             HasDied = true;
             IsRunning = false;
             UpdateTimerText();
 
-            if (manager == null)
-            {
-                manager = EarthquakeManager.Instance;
-            }
-
-            if (manager != null)
-            {
-                manager.StopEarthquake();
-            }
-
-            if (player == null)
-            {
-                player = FindAnyObjectByType<PlayerController>();
-            }
-
-            if (player != null)
-            {
-                player.SetControlEnabled(false);
-            }
-
-            ShowDeathMessage();
-
-            if (gameOverRoutine != null)
-            {
-                StopCoroutine(gameOverRoutine);
-            }
-
-            gameOverRoutine = StartCoroutine(LoadGameOverRoutine());
-        }
-
-        private void ShowDeathMessage()
-        {
+            // Dispara la muerte centralizada en Estado -> Options
             if (Estado.Instance != null)
             {
-                Estado.Instance.ShowDeath(deathMessage);
-                return;
+                Estado.Instance.TriggerDeath();
             }
-
-            if (deathText != null)
+            else
             {
-                deathText.text = deathMessage;
-                deathText.gameObject.SetActive(true);
-                deathText.transform.SetAsLastSibling();
+                Options options = FindAnyObjectByType<Options>();
+                if (options != null)
+                {
+                    options.TriggerDeathSequence();
+                }
             }
-        }
-
-        private IEnumerator LoadGameOverRoutine()
-        {
-            if (delayBeforeGameOver > 0f)
-            {
-                yield return new WaitForSecondsRealtime(delayBeforeGameOver);
-            }
-
-            if (string.IsNullOrEmpty(gameOverScene))
-            {
-                Debug.LogWarning("Ground Rumble: no se asigno la escena de Game Over.");
-                yield break;
-            }
-
-            if (!Application.CanStreamedLevelBeLoaded(gameOverScene))
-            {
-                Debug.LogWarning($"Ground Rumble: la escena '{gameOverScene}' no existe o no esta en Build Settings.");
-                yield break;
-            }
-
-            Time.timeScale = 1f;
-            SceneManager.LoadScene(gameOverScene);
         }
 
         private void ResolveReferences()
@@ -236,15 +163,11 @@ namespace GroundRumble
 
         private void UpdateTimerText()
         {
-            if (timerText == null)
-            {
-                return;
-            }
+            if (timerText == null) return;
 
             int totalSeconds = Mathf.CeilToInt(Mathf.Max(0f, TimeLeft));
             timerText.text = $"{totalSeconds / 60:00}:{totalSeconds % 60:00}";
             timerText.color = TimeLeft <= 30f ? new Color(1f, 0.3f, 0.2f) : Color.white;
         }
-
     }
 }

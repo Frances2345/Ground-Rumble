@@ -13,10 +13,6 @@ namespace GroundRumble
         public Image stateImage;
         public Image stateFill;
 
-        [Header("Muerte (asignar en el inspector)")]
-        public Image deathOverlay;
-        public TMP_Text deathText;
-
         [Header("Indicador")]
         [SerializeField] private Color calmColor = new Color(0.2f, 0.9f, 0.35f);
         [SerializeField] private Color quakeColor = new Color(0.95f, 0.15f, 0.1f);
@@ -32,11 +28,7 @@ namespace GroundRumble
         [SerializeField] private string calmMessage = "Por ahora todo es calma";
         [SerializeField] private string quakeMessage = "TERREMOTO EN PROGRESO";
 
-        [Header("Mensaje de muerte")]
-        [SerializeField, TextArea(1, 2)] private string deathMessage = "HAZ MUERTO";
-
         public bool IsGameOver { get; private set; }
-        public string DeathMessage => deathMessage;
 
         private EarthquakeManager manager;
         private PlayerController player;
@@ -49,17 +41,6 @@ namespace GroundRumble
             Instance = this;
             player = FindAnyObjectByType<PlayerController>();
             ResolveStateRect();
-
-            if (deathOverlay != null)
-            {
-                deathOverlay.gameObject.SetActive(false);
-            }
-
-            if (deathText != null && string.IsNullOrEmpty(deathText.text))
-            {
-                deathText.text = deathMessage;
-            }
-
             UpdateStateText();
         }
 
@@ -71,22 +52,10 @@ namespace GroundRumble
             }
         }
 
-        public void ConfigureUI(Image state, Image overlay, TMP_Text text)
+        public void ConfigureUI(Image state)
         {
             stateImage = state;
-            deathOverlay = overlay;
-            deathText = text;
             ResolveStateRect();
-
-            if (deathOverlay != null)
-            {
-                deathOverlay.gameObject.SetActive(false);
-            }
-
-            if (deathText != null && string.IsNullOrEmpty(deathText.text))
-            {
-                deathText.text = deathMessage;
-            }
         }
 
         public void ConfigureStatusUI(TMP_Text text, Image fill)
@@ -97,6 +66,8 @@ namespace GroundRumble
 
         private void Update()
         {
+            if (IsGameOver) return;
+
             if (manager == null)
             {
                 manager = EarthquakeManager.Instance;
@@ -110,10 +81,7 @@ namespace GroundRumble
 
         private void UpdateStateImage()
         {
-            if (stateImage == null)
-            {
-                return;
-            }
+            if (stateImage == null) return;
 
             bool shaking = manager != null && manager.IsShaking;
             Color targetColor = shaking ? quakeColor : calmColor;
@@ -149,10 +117,7 @@ namespace GroundRumble
 
         private void UpdateStateText()
         {
-            if (stateText == null)
-            {
-                return;
-            }
+            if (stateText == null) return;
 
             bool shaking = manager != null && manager.IsShaking;
             stateText.text = shaking ? quakeMessage : calmMessage;
@@ -164,10 +129,7 @@ namespace GroundRumble
 
         private void UpdateStateFill()
         {
-            if (stateFill == null)
-            {
-                return;
-            }
+            if (stateFill == null) return;
 
             bool shaking = manager != null && manager.IsShaking;
             float target = 1f;
@@ -185,59 +147,23 @@ namespace GroundRumble
                 Time.deltaTime * colorLerpSpeed);
         }
 
-        public void ShowDeath()
-        {
-            ShowDeath(deathMessage);
-        }
-
-        public void ShowDeath(string message)
-        {
-            if (IsGameOver)
-            {
-                return;
-            }
-
-            IsGameOver = true;
-
-            if (manager == null)
-            {
-                manager = EarthquakeManager.Instance;
-            }
-
-            if (manager != null)
-            {
-                manager.StopEarthquake();
-            }
-
-            if (player == null)
-            {
-                player = FindAnyObjectByType<PlayerController>();
-            }
-
-            if (player != null)
-            {
-                player.SetControlEnabled(false);
-            }
-
-            if (deathOverlay != null)
-            {
-                deathOverlay.color = Color.black;
-                deathOverlay.raycastTarget = false;
-                deathOverlay.gameObject.SetActive(true);
-                deathOverlay.transform.SetAsLastSibling();
-            }
-
-            if (deathText != null)
-            {
-                deathText.text = string.IsNullOrEmpty(message) ? deathMessage : message;
-                deathText.gameObject.SetActive(true);
-                deathText.transform.SetAsLastSibling();
-            }
-        }
-
         public void TriggerDeath()
         {
-            ShowDeath(deathMessage);
+            if (IsGameOver) return;
+            IsGameOver = true;
+
+            if (manager == null) manager = EarthquakeManager.Instance;
+            if (manager != null) manager.StopEarthquake();
+
+            if (player == null) player = FindAnyObjectByType<PlayerController>();
+            if (player != null) player.SetControlEnabled(false);
+
+            // Delega la ralentización, el fundido a negro y el cambio de escena a Options
+            Options options = FindAnyObjectByType<Options>();
+            if (options != null)
+            {
+                options.TriggerDeathSequence();
+            }
         }
 
         private void ResolveStateRect()
@@ -250,11 +176,7 @@ namespace GroundRumble
             }
 
             RectTransform rect = stateImage.rectTransform;
-
-            if (rect == stateRect && hasStateBaseScale)
-            {
-                return;
-            }
+            if (rect == stateRect && hasStateBaseScale) return;
 
             stateRect = rect;
             stateBaseScale = rect.localScale;

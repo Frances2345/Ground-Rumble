@@ -12,7 +12,6 @@ namespace GroundRumble
         [SerializeField] private float sensitivity = 0.12f;
         [SerializeField] private float minPitch = -80f;
         [SerializeField] private float maxPitch = 80f;
-        [SerializeField] private bool lockCursorOnStart = true;
 
         private PlayerController playerController;
         private float pitch;
@@ -27,33 +26,23 @@ namespace GroundRumble
             playerController = GetComponent<PlayerController>();
         }
 
-        private void Start()
-        {
-            if (lockCursorOnStart)
-            {
-                LockCursor();
-            }
-        }
-
-        private void OnDisable()
-        {
-            UnlockCursor();
-        }
-
         private void Update()
         {
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            // 1. CONDICIÓN CLAVE: Si el tiempo está detenido (juego pausado), no movemos la cámara.
+            if (Time.timeScale == 0f)
             {
-                UnlockCursor();
                 return;
             }
 
+            // 2. Si hacemos clic en la pantalla mientras jugamos, bloqueamos el ratón.
+            // (Ya no choca con los botones de la UI porque si está pausado, no pasa de la condición de arriba)
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked)
             {
                 LockCursor();
                 return;
             }
 
+            // 3. Si el ratón está desbloqueado (como al estar en la pantalla de pausa), evitamos rotar.
             if (Cursor.lockState != CursorLockMode.Locked || Mouse.current == null)
             {
                 return;
@@ -64,6 +53,7 @@ namespace GroundRumble
                 return;
             }
 
+            // Movimiento normal de cámara
             Vector2 delta = Mouse.current.delta.ReadValue() * sensitivity;
 
             transform.Rotate(Vector3.up, delta.x, Space.Self);
@@ -80,12 +70,6 @@ namespace GroundRumble
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-        }
-
-        private static void UnlockCursor()
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
         }
     }
 }

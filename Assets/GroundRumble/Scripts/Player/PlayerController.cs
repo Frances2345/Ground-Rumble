@@ -371,6 +371,11 @@ namespace GroundRumble
         {
         }
 
+        public void OnPauseGame(InputAction.CallbackContext context)
+        {
+        }
+
+
         public void OnInteract(InputAction.CallbackContext context)
         {
         }
