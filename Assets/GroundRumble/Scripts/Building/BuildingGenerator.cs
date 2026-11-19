@@ -69,6 +69,9 @@ namespace GroundRumble
         [SerializeField] private bool debrisRequirePlayerNear = true;
         [SerializeField] private float roomActivationRadius = 12f;
 
+        [Header("Pisos rompibles")]
+        [SerializeField] private bool breakableFloors = true;
+
         [Header("Materiales")]
         [SerializeField] private Material wallMaterial;
         [SerializeField] private Material floorMaterial;
@@ -233,6 +236,7 @@ namespace GroundRumble
             RoomEarthquakeSettings room = floor.AddComponent<RoomEarthquakeSettings>();
             room.Configure(debrisCountPerRoom, debrisRequirePlayerNear, debrisMaterial);
             room.ConfigureActivationRadius(roomActivationRadius);
+            room.ConfigureBreakableFloor(breakableFloors);
 
             // La losa del piso 1 es solida; del piso 2 en adelante tiene el hueco
             // por el que se baja desde el piso de arriba.

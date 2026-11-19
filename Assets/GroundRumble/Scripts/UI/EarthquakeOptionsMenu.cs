@@ -129,7 +129,8 @@ namespace GroundRumble
                 effectsLabel.text =
                     "A mayor magnitud, más escombros, más vidrios rotos y una sacudida más fuerte.\n" +
                     "El temblor no te quita vida por sí solo, pero los escombros y los añicos te dañan al golpearte.\n" +
-                    "Si te resbalas, quedas aturdido unos segundos y pierdes vida.";
+                    "Si te resbalas, quedas aturdido unos segundos y pierdes vida.\n" +
+                    "En pisos rompibles, el suelo puede colapsar: usa las columnas para resguardarte.";
             }
         }
 

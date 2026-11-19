@@ -24524,7 +24524,15 @@ MonoBehaviour:
   debrisPrefab: {fileID: 0}
   requirePlayerNear: 1
   activationRadius: 12
-  windowBreakMultiplier: 1
+  windowBreakMultiplier: 1
+  breakableFloor: 1
+  breakWithoutPlayer: 1
+  autoCollapseChance: 0.3
+  breakableCellSize: 5.5
+  minimumIntensityToBreak: 0.18
+  floorWarningDuration: 3
+  columnSafeMargin: 1.5
+  breakCooldown: 1.5
   debrisMaterial: {fileID: 2100000, guid: ff2be1c04c347b1419d223847985f2bd, type: 2}
 --- !u!1 &263505606
 GameObject:
@@ -36546,7 +36554,15 @@ MonoBehaviour:
   debrisPrefab: {fileID: 0}
   requirePlayerNear: 1
   activationRadius: 12
-  windowBreakMultiplier: 1
+  windowBreakMultiplier: 1
+  breakableFloor: 1
+  breakWithoutPlayer: 1
+  autoCollapseChance: 0.3
+  breakableCellSize: 5.5
+  minimumIntensityToBreak: 0.18
+  floorWarningDuration: 3
+  columnSafeMargin: 1.5
+  breakCooldown: 1.5
   debrisMaterial: {fileID: 2100000, guid: ff2be1c04c347b1419d223847985f2bd, type: 2}
 --- !u!1 &376261362
 GameObject:
@@ -40622,7 +40638,15 @@ MonoBehaviour:
   debrisPrefab: {fileID: 0}
   requirePlayerNear: 1
   activationRadius: 12
-  windowBreakMultiplier: 1
+  windowBreakMultiplier: 1
+  breakableFloor: 1
+  breakWithoutPlayer: 1
+  autoCollapseChance: 0.3
+  breakableCellSize: 5.5
+  minimumIntensityToBreak: 0.18
+  floorWarningDuration: 3
+  columnSafeMargin: 1.5
+  breakCooldown: 1.5
   debrisMaterial: {fileID: 2100000, guid: ff2be1c04c347b1419d223847985f2bd, type: 2}
 --- !u!1 &415588629
 GameObject:
@@ -140215,7 +140239,15 @@ MonoBehaviour:
   debrisPrefab: {fileID: 0}
   requirePlayerNear: 1
   activationRadius: 12
-  windowBreakMultiplier: 1
+  windowBreakMultiplier: 1
+  breakableFloor: 1
+  breakWithoutPlayer: 1
+  autoCollapseChance: 0.3
+  breakableCellSize: 5.5
+  minimumIntensityToBreak: 0.18
+  floorWarningDuration: 3
+  columnSafeMargin: 1.5
+  breakCooldown: 1.5
   debrisMaterial: {fileID: 2100000, guid: ff2be1c04c347b1419d223847985f2bd, type: 2}
 --- !u!1 &1491527035
 GameObject:
@@ -173490,7 +173522,15 @@ MonoBehaviour:
   debrisPrefab: {fileID: 0}
   requirePlayerNear: 1
   activationRadius: 12
-  windowBreakMultiplier: 1
+  windowBreakMultiplier: 1
+  breakableFloor: 1
+  breakWithoutPlayer: 1
+  autoCollapseChance: 0.3
+  breakableCellSize: 5.5
+  minimumIntensityToBreak: 0.18
+  floorWarningDuration: 3
+  columnSafeMargin: 1.5
+  breakCooldown: 1.5
   debrisMaterial: {fileID: 2100000, guid: ff2be1c04c347b1419d223847985f2bd, type: 2}
 --- !u!1 &1867406330
 GameObject:
@@ -192229,7 +192269,15 @@ MonoBehaviour:
   debrisPrefab: {fileID: 0}
   requirePlayerNear: 1
   activationRadius: 12
-  windowBreakMultiplier: 1
+  windowBreakMultiplier: 1
+  breakableFloor: 1
+  breakWithoutPlayer: 1
+  autoCollapseChance: 0.3
+  breakableCellSize: 5.5
+  minimumIntensityToBreak: 0.18
+  floorWarningDuration: 3
+  columnSafeMargin: 1.5
+  breakCooldown: 1.5
   debrisMaterial: {fileID: 2100000, guid: ff2be1c04c347b1419d223847985f2bd, type: 2}
 --- !u!1 &2065261006
 GameObject:

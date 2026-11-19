@@ -38,6 +38,11 @@ namespace GroundRumble
 
         public static bool IsPositionSafe(Vector3 position)
         {
+            return IsPositionSafe(position, 0f);
+        }
+
+        public static bool IsPositionSafe(Vector3 position, float extraRadius)
+        {
             for (int i = zones.Count - 1; i >= 0; i--)
             {
                 SafeZone zone = zones[i];
@@ -57,7 +62,9 @@ namespace GroundRumble
 
                 delta.y = 0f;
 
-                if (delta.sqrMagnitude <= zone.safeRadius * zone.safeRadius)
+                float radius = zone.safeRadius + Mathf.Max(0f, extraRadius);
+
+                if (delta.sqrMagnitude <= radius * radius)
                 {
                     return true;
                 }

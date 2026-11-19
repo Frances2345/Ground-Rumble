@@ -37,6 +37,12 @@ namespace GroundRumble
         [SerializeField] private float slipLockDuration = 2f;
         [SerializeField] private float slipKnockback = 3.5f;
 
+        [Header("Caidas")]
+        [SerializeField] private float fallDamageMinHeight = 2.5f;
+        [Range(0f, 1f)]
+        [SerializeField] private float fallDamagePercent = 0.5f;
+        [SerializeField] private float fallStunDuration = 6f;
+
         [Header("Referencias")]
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private Transform cameraTransform;
@@ -62,6 +68,10 @@ namespace GroundRumble
         private float slipCheckTimer;
         private float slipLockTimer;
         private Vector3 slipVelocity;
+        private float fallPeakY;
+        private bool wasGrounded;
+        private bool dangerousFallPending;
+        private float dangerousFallTimer;
 
         public bool IsCrouching => isCrouching;
         public bool IsSprinting => isSprinting;
@@ -92,6 +102,7 @@ namespace GroundRumble
             characterController.height = standingHeight;
             characterController.center = standingCenter;
             slipCheckTimer = slipCheckInterval;
+            fallPeakY = transform.position.y;
         }
 
         public void ConfigureSprint(float speed, float floorHeightValue)
@@ -152,6 +163,7 @@ namespace GroundRumble
             }
 
             isGrounded = characterController.isGrounded;
+            UpdateFallState();
 
             if (isGrounded && velocity.y < 0f)
             {
@@ -369,6 +381,81 @@ namespace GroundRumble
             transform.position += Vector3.up * amount;
             characterController.enabled = true;
             velocity.y = 0f;
+            fallPeakY = transform.position.y;
+            wasGrounded = true;
+            dangerousFallPending = false;
+            dangerousFallTimer = 0f;
+        }
+
+        public void MarkDangerousFall()
+        {
+            dangerousFallPending = true;
+            dangerousFallTimer = 2f;
+        }
+
+        private void UpdateFallState()
+        {
+            if (isGrounded)
+            {
+                if (!wasGrounded && dangerousFallPending)
+                {
+                    if (fallPeakY - transform.position.y >= fallDamageMinHeight)
+                    {
+                        ApplyFallPenalty();
+                    }
+
+                    dangerousFallPending = false;
+                }
+
+                fallPeakY = transform.position.y;
+                wasGrounded = true;
+
+                if (dangerousFallPending)
+                {
+                    dangerousFallTimer -= Time.deltaTime;
+
+                    if (dangerousFallTimer <= 0f)
+                    {
+                        dangerousFallPending = false;
+                    }
+                }
+            }
+            else
+            {
+                if (wasGrounded)
+                {
+                    fallPeakY = transform.position.y;
+                }
+
+                fallPeakY = Mathf.Max(fallPeakY, transform.position.y);
+                wasGrounded = false;
+            }
+        }
+
+        private void ApplyFallPenalty()
+        {
+            dangerousFallPending = false;
+            dangerousFallTimer = 0f;
+            slipLockTimer = Mathf.Max(slipLockTimer, fallStunDuration);
+            slipVelocity = Vector3.zero;
+            isSprinting = false;
+            sprintHeld = false;
+            stamina?.StopSprint();
+
+            if (cameraShake == null)
+            {
+                ResolveCameraShake();
+            }
+
+            if (cameraShake != null)
+            {
+                cameraShake.PlayFallStun(fallStunDuration);
+            }
+
+            if (health != null)
+            {
+                health.ApplyDamage(health.MaxHealth * fallDamagePercent, true);
+            }
         }
 
         public void SetControlEnabled(bool enabled)
