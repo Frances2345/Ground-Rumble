@@ -49201,7 +49201,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.5, y: 1, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1627568589}
@@ -156141,16 +156141,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.BuildingGenerator
   floorCount: 30
   floorHeight: 3.6
-  floorWidth: 28
-  floorDepth: 24
+  floorWidth: 42
+  floorDepth: 36
   slabThickness: 0.25
   wallThickness: 0.2
   generateFloorHoles: 1
   holeSize: 2.6
   holeMarginFromWall: 0.45
   generateSafeColumns: 1
-  columnOffsetX: 12.8
-  columnOffsetZ: 10.2
+  columnOffsetX: 19.8
+  columnOffsetZ: 16.2
   columnRadius: 0.35
   safeZoneRadius: 1.5749999
   columnMaterial: {fileID: 2100000, guid: ec67e27aa2b398141a6916cbc3060371, type: 2}

@@ -284,7 +284,7 @@ MonoBehaviour:
   slipCheckInterval: 0.45
   slipChance: 0.35
   slipDamagePercent: 0.1
-  slipLockDuration: 0.5
+  slipLockDuration: 2
   slipKnockback: 3.5
   cameraPivot: {fileID: 9141893302008119589}
   cameraTransform: {fileID: 1396172213381113563}

@@ -21,6 +21,7 @@ namespace GroundRumble
         [SerializeField] private float respawnDelay = 3f;
 
         [Header("Terremoto")]
+        [SerializeField] private bool earthquakeDealsDamage = false;
         [SerializeField] private float quakeDamagePerSecond = 4f;
 
         [Header("UI (Canvas)")]
@@ -49,10 +50,6 @@ namespace GroundRumble
         private Vector3 spawnPosition;
         private Quaternion spawnRotation;
 
-        // --- Nuevas variables para la curación por inactividad ---
-        private float immobileTimer;
-        private Vector3 lastPosition;
-
         private void Awake()
         {
             CurrentHealth = maxHealth;
@@ -60,8 +57,6 @@ namespace GroundRumble
             characterController = GetComponent<CharacterController>();
             spawnPosition = transform.position;
             spawnRotation = transform.rotation;
-
-            lastPosition = transform.position; // Inicializamos posición
 
             PrepareBackground(healthBackground);
             PrepareImage(healthImage);
@@ -76,38 +71,16 @@ namespace GroundRumble
             }
 
             ApplyQuakeDamage(Time.deltaTime);
-            HandleInactivityHealing(Time.deltaTime); // Llamada a la curación
             UpdateUI();
-        }
-
-        // --- Nuevo método respetando tu estilo ---
-        private void HandleInactivityHealing(float deltaTime)
-        {
-            if (IsDead || CurrentHealth >= maxHealth)
-            {
-                immobileTimer = 0f;
-                lastPosition = transform.position;
-                return;
-            }
-
-            // Comprueba si se ha movido
-            if (Vector3.Distance(transform.position, lastPosition) > 0.01f)
-            {
-                immobileTimer = 0f;
-                lastPosition = transform.position;
-            }
-            else
-            {
-                immobileTimer += deltaTime;
-                if (immobileTimer >= 5f)
-                {
-                    Heal(2f * deltaTime); // Cura 2 por segundo
-                }
-            }
         }
 
         private void ApplyQuakeDamage(float deltaTime)
         {
+            if (!earthquakeDealsDamage)
+            {
+                return;
+            }
+
             EarthquakeManager manager = EarthquakeManager.Instance;
 
             if (manager == null || !manager.IsShaking || IsDead)
@@ -169,7 +142,6 @@ namespace GroundRumble
             }
 
             CurrentHealth = Mathf.Max(0f, CurrentHealth - amount);
-            immobileTimer = 0f; // Reiniciamos el temporizador al recibir daño
 
             if (!ignoreInvulnerability)
             {
@@ -190,24 +162,11 @@ namespace GroundRumble
             quakeDamagePerSecond = Mathf.Max(0f, damagePerSecond);
         }
 
-        public void Heal(float amount)
-        {
-            if (IsDead || amount <= 0f)
-            {
-                return;
-            }
-
-            CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
-            OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
-            UpdateUI();
-        }
-
         public void RestoreFull()
         {
             IsDead = false;
             CurrentHealth = maxHealth;
             invulnerabilityTimer = 0f;
-            immobileTimer = 0f; // Reiniciamos aquí también
             OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
             UpdateUI();
         }

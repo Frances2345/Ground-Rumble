@@ -67,6 +67,19 @@ namespace GroundRumble
             set => intensity = Mathf.Clamp01(value);
         }
 
+        /// <summary>
+        /// Magnitud en escala de Richter (1.0 - 9.0). Se guarda en <see cref="GameSettings"/>.
+        /// </summary>
+        public float Magnitude
+        {
+            get => GameSettings.EarthquakeMagnitude;
+            set
+            {
+                GameSettings.EarthquakeMagnitude = value;
+                intensity = GameSettings.NormalizedIntensity;
+            }
+        }
+
         public bool IsShaking => State == QuakeState.Shaking;
         public bool IsWarning => State == QuakeState.Warning;
         public float TimeUntilEarthquake => State == QuakeState.Warning ? Mathf.Max(0f, warningTimer) : 0f;
@@ -106,6 +119,8 @@ namespace GroundRumble
 
         private void Start()
         {
+            intensity = GameSettings.NormalizedIntensity;
+
             if (autoStart)
             {
                 StartCoroutine(AutoStartRoutine());

@@ -132,27 +132,37 @@ namespace GroundRumble
 
         private bool IsPlayerNear()
         {
-            if (player == null)
-            {
-                PlayerController controller = Object.FindAnyObjectByType<PlayerController>();
-
-                if (controller != null)
-                {
-                    player = controller.transform;
-                }
-            }
-
-            if (player == null)
+            if (!TryResolvePlayer())
             {
                 return false;
             }
 
-            return Vector3.Distance(player.position, transform.position) <= activationRadius;
+            // Cada cuarto cubre un piso completo, asi que solo importa que el
+            // jugador este en esa altura (no la distancia horizontal al centro).
+            float tolerance = Mathf.Max(3f, spawnHeight + 0.5f);
+            return Mathf.Abs(player.position.y - transform.position.y) <= tolerance;
+        }
+
+        private bool TryResolvePlayer()
+        {
+            if (player != null)
+            {
+                return true;
+            }
+
+            PlayerController controller = Object.FindAnyObjectByType<PlayerController>();
+
+            if (controller != null)
+            {
+                player = controller.transform;
+            }
+
+            return player != null;
         }
 
         private IEnumerator SpawnDebrisRoutine(float duration, float intensity)
         {
-            int count = Mathf.Max(0, debrisCount);
+            int count = GameSettings.GetDebrisCount(debrisCount, intensity);
 
             if (count == 0)
             {
@@ -179,8 +189,15 @@ namespace GroundRumble
 
         private void SpawnDebris(float intensity)
         {
+            Vector3 center = transform.position;
+
+            if (TryResolvePlayer())
+            {
+                center = new Vector3(player.position.x, transform.position.y, player.position.z);
+            }
+
             Vector2 circle = Random.insideUnitCircle * spawnRadius;
-            Vector3 spawnPosition = transform.position + new Vector3(circle.x, spawnHeight, circle.y);
+            Vector3 spawnPosition = center + new Vector3(circle.x, spawnHeight, circle.y);
 
             if (debrisPrefab != null)
             {

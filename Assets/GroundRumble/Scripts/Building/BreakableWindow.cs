@@ -85,9 +85,11 @@ namespace GroundRumble
                 return;
             }
 
-            float intensity = manager != null ? manager.Intensity : 1f;
+            float intensity = manager != null ? Mathf.Clamp01(manager.Intensity) : 1f;
             float roomMultiplier = room != null ? room.WindowBreakMultiplier : 1f;
-            float chance = baseBreakChancePerSecond * Mathf.Lerp(0.35f, 1.6f, intensity) * roomMultiplier;
+            float chance = baseBreakChancePerSecond
+                * Mathf.Lerp(0.12f, 4f, Mathf.Pow(intensity, 1.25f))
+                * roomMultiplier;
 
             if (Random.value < chance * Time.deltaTime)
             {
@@ -149,20 +151,25 @@ namespace GroundRumble
 
             if (spawnShards)
             {
-                SpawnShards();
+                float breakPower = manager != null && manager.IsShaking ? Mathf.Clamp01(manager.Intensity) : 0.5f;
+                SpawnShards(breakPower);
             }
 
             Destroy(gameObject, shardLifetime + 1f);
         }
 
-        private void SpawnShards()
+        private void SpawnShards(float intensity)
         {
+            float power = Mathf.Clamp01(intensity);
+            int count = Mathf.Max(2, Mathf.RoundToInt(shardCount * Mathf.Lerp(0.35f, 2.5f, power)));
+            float damageScale = Mathf.Lerp(0.7f, 1.5f, power);
+            float sizeScale = Mathf.Lerp(0.85f, 1.25f, power);
             Vector3 scale = transform.lossyScale;
             Vector3 halfSize = scale * 0.5f;
             bool thinOnX = scale.x <= scale.z;
             Material material = shardMaterial != null ? shardMaterial : GetFallbackShardMaterial();
 
-            for (int i = 0; i < shardCount; i++)
+            for (int i = 0; i < count; i++)
             {
                 Vector3 localOffset = new Vector3(
                     Random.Range(-halfSize.x, halfSize.x),
@@ -177,9 +184,9 @@ namespace GroundRumble
                 shard.transform.position = worldPosition;
                 shard.transform.rotation = transform.rotation;
 
-                float sizeX = Random.Range(shardSize * 0.45f, shardSize);
-                float sizeY = Random.Range(shardSize * 0.45f, shardSize);
-                float sizeZ = Random.Range(shardSize * 0.45f, shardSize);
+                float sizeX = Random.Range(shardSize * 0.45f, shardSize) * sizeScale;
+                float sizeY = Random.Range(shardSize * 0.45f, shardSize) * sizeScale;
+                float sizeZ = Random.Range(shardSize * 0.45f, shardSize) * sizeScale;
 
                 shard.transform.localScale = thinOnX
                     ? new Vector3(0.02f, sizeY, sizeZ)
@@ -207,7 +214,7 @@ namespace GroundRumble
                 body.AddTorque(Random.insideUnitSphere * shardForce, ForceMode.Impulse);
 
                 DebrisDamage damage = shard.AddComponent<DebrisDamage>();
-                damage.Configure(shardDamageMin, shardDamageMax);
+                damage.Configure(shardDamageMin * damageScale, shardDamageMax * damageScale);
 
                 Destroy(shard, shardLifetime + Random.Range(0f, 1.5f));
             }

@@ -28,8 +28,8 @@ namespace GroundRumble
         [Header("Dimensiones")]
         [SerializeField] private int floorCount = 30;
         [SerializeField] private float floorHeight = 3.6f;
-        [SerializeField] private float floorWidth = 28f;
-        [SerializeField] private float floorDepth = 24f;
+        [SerializeField] private float floorWidth = 42f;
+        [SerializeField] private float floorDepth = 36f;
         [SerializeField] private float slabThickness = 0.25f;
         [SerializeField] private float wallThickness = 0.2f;
 
@@ -40,8 +40,8 @@ namespace GroundRumble
 
         [Header("Columnas / zonas seguras")]
         [SerializeField] private bool generateSafeColumns = true;
-        [SerializeField] private float columnOffsetX = 12.8f;
-        [SerializeField] private float columnOffsetZ = 10.2f;
+        [SerializeField] private float columnOffsetX = 19.8f;
+        [SerializeField] private float columnOffsetZ = 16.2f;
         [SerializeField] private float columnRadius = 0.4f;
         [SerializeField] private float safeZoneRadius = 1.8f;
         [SerializeField] private Material columnMaterial;

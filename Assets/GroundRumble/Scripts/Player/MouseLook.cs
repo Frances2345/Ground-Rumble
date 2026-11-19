@@ -48,7 +48,7 @@ namespace GroundRumble
                 return;
             }
 
-            if (playerController != null && !playerController.ControlEnabled)
+            if (playerController != null && (!playerController.ControlEnabled || playerController.IsSlipping))
             {
                 return;
             }

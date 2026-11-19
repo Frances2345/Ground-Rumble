@@ -31,9 +31,10 @@ namespace GroundRumble
         [SerializeField] private float slipCheckInterval = 0.45f;
         [Range(0f, 1f)]
         [SerializeField] private float slipChance = 0.35f;
+        [SerializeField] private bool slipsDealDamage = true;
         [Range(0f, 1f)]
         [SerializeField] private float slipDamagePercent = 0.10f;
-        [SerializeField] private float slipLockDuration = 0.5f;
+        [SerializeField] private float slipLockDuration = 2f;
         [SerializeField] private float slipKnockback = 3.5f;
 
         [Header("Referencias")]
@@ -48,6 +49,7 @@ namespace GroundRumble
 
         private CharacterController characterController;
         private InputSystem_Actions inputActions;
+        private CameraShake cameraShake;
 
         private Vector2 moveInput;
         private Vector3 velocity;
@@ -79,6 +81,8 @@ namespace GroundRumble
             {
                 cameraTransform = Camera.main.transform;
             }
+
+            ResolveCameraShake();
 
             if (cameraPivot != null)
             {
@@ -124,9 +128,19 @@ namespace GroundRumble
             cameraTransform = cam;
             cameraPivot = pivot;
 
+            ResolveCameraShake();
+
             if (cameraPivot != null)
             {
                 standingCameraHeight = cameraPivot.localPosition.y;
+            }
+        }
+
+        private void ResolveCameraShake()
+        {
+            if (cameraTransform != null)
+            {
+                cameraShake = cameraTransform.GetComponent<CameraShake>();
             }
         }
 
@@ -161,6 +175,7 @@ namespace GroundRumble
 
             bool wantsSprint = sprintHeld
                 && !isCrouching
+                && slipLockTimer <= 0f
                 && moveDirection != Vector3.zero
                 && stamina != null
                 && (stamina.IsSprinting || stamina.CanStartSprint);
@@ -266,7 +281,17 @@ namespace GroundRumble
             sprintHeld = false;
             stamina?.StopSprint();
 
-            if (health != null)
+            if (cameraShake == null)
+            {
+                ResolveCameraShake();
+            }
+
+            if (cameraShake != null)
+            {
+                cameraShake.PlaySlip(slipLockDuration);
+            }
+
+            if (slipsDealDamage && health != null)
             {
                 health.ApplyDamage(health.MaxHealth * slipDamagePercent, true);
             }
@@ -382,6 +407,11 @@ namespace GroundRumble
 
         public void OnCrouch(InputAction.CallbackContext context)
         {
+            if (IsSlipping)
+            {
+                return;
+            }
+
             if (toggleCrouch)
             {
                 if (context.performed)
@@ -404,7 +434,7 @@ namespace GroundRumble
 
         public void OnJump(InputAction.CallbackContext context)
         {
-            if (context.performed && isGrounded && !isCrouching && controlEnabled)
+            if (context.performed && isGrounded && !isCrouching && controlEnabled && !IsSlipping)
             {
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }

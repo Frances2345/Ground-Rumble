@@ -21,8 +21,8 @@ namespace GroundRumble.EditorTools
 
         private const int BuildingFloors = 30;
         private const float BuildingFloorHeight = 3.6f;
-        private const float BuildingWidth = 28f;
-        private const float BuildingDepth = 24f;
+        private const float BuildingWidth = 42f;
+        private const float BuildingDepth = 36f;
         private const int BuildingWindows = 4;
         private const float BuildingGlassChance = 0.3f;
         private const float SprintSpeed = 8.6f;
