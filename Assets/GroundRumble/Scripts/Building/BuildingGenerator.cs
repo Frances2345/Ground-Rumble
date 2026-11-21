@@ -9,6 +9,8 @@ namespace GroundRumble
     /// </summary>
     public class BuildingGenerator : MonoBehaviour
     {
+        private const int CurrentLayoutVersion = 2;
+
         private enum WallSide
         {
             North,
@@ -25,9 +27,18 @@ namespace GroundRumble
             BottomLeft
         }
 
+        [Header("Rampas entre pisos")]
+        [SerializeField] private bool generateRamps = true;
+        [Range(15f, 42f)]
+        [SerializeField] private float rampAngle = 34f;
+        [SerializeField] private float rampWidth = 2.2f;
+        [SerializeField] private float rampThickness = 0.28f;
+        [SerializeField] private float rampRailHeight = 0.3f;
+        [SerializeField] private Material rampMaterial;
+
         [Header("Dimensiones")]
         [SerializeField] private int floorCount = 30;
-        [SerializeField] private float floorHeight = 3.6f;
+        [SerializeField] private float floorHeight = GameSettings.FloorHeight;
         [SerializeField] private float floorWidth = 42f;
         [SerializeField] private float floorDepth = 36f;
         [SerializeField] private float slabThickness = 0.25f;
@@ -83,6 +94,7 @@ namespace GroundRumble
         [Header("Otros")]
         [SerializeField] private bool generateRoof = true;
         [SerializeField] private string generatedRootName = "Edificio_Generado";
+        [SerializeField, HideInInspector] private int layoutVersion;
 
         public int FloorCount => Mathf.Max(1, floorCount);
         public float FloorHeight => floorHeight;
@@ -91,10 +103,10 @@ namespace GroundRumble
         public Vector3 GetTopFloorSpawnPosition()
         {
             float topFloorY = (FloorCount - 1) * floorHeight;
-            return new Vector3(0f, topFloorY + slabThickness + 0.05f, -2f);
+            return transform.TransformPoint(new Vector3(0f, topFloorY + slabThickness + 0.05f, -2f));
         }
 
-        public void SetMaterials(Material wall, Material floor, Material ceiling, Material glass, Material shards, Material debris, Material exit = null)
+        public void SetMaterials(Material wall, Material floor, Material ceiling, Material glass, Material shards, Material debris, Material exit = null, Material ramp = null)
         {
             wallMaterial = wall;
             floorMaterial = floor;
@@ -102,6 +114,7 @@ namespace GroundRumble
             glassMaterial = glass;
             shardMaterial = shards;
             debrisMaterial = debris;
+            rampMaterial = ramp;
 
             if (exit != null)
             {
@@ -146,6 +159,55 @@ namespace GroundRumble
             roomActivationRadius = Mathf.Max(0f, activationRadius);
         }
 
+        private void Start()
+        {
+            if (!Application.isPlaying || layoutVersion >= CurrentLayoutVersion)
+            {
+                return;
+            }
+
+            floorHeight = GameSettings.FloorHeight;
+            ConfigureLayout(floorCount, floorHeight, floorWidth, floorDepth, windowsPerWall, fullGlassWallChance);
+            Generate();
+            RepositionPlayer();
+            Debug.Log("Ground Rumble: edificio regenerado con rampas y altura de piso actualizada.");
+        }
+
+        private void RepositionPlayer()
+        {
+            PlayerController player = FindAnyObjectByType<PlayerController>();
+
+            if (player == null)
+            {
+                return;
+            }
+
+            CharacterController controller = player.GetComponent<CharacterController>();
+
+            if (controller != null)
+            {
+                controller.enabled = false;
+            }
+
+            player.ConfigureFloorHeight(floorHeight);
+
+            Vector3 spawn = GetTopFloorSpawnPosition();
+            Quaternion spawnRotation = transform.rotation;
+            player.transform.SetPositionAndRotation(spawn, spawnRotation);
+
+            if (controller != null)
+            {
+                controller.enabled = true;
+            }
+
+            Vida health = player.GetComponent<Vida>();
+
+            if (health != null)
+            {
+                health.SetSpawnPoint(spawn, spawnRotation);
+            }
+        }
+
         [ContextMenu("Generar Edificio (30 pisos)")]
         public void Generate()
         {
@@ -160,6 +222,7 @@ namespace GroundRumble
                 BuildFloor(root.transform, i);
             }
 
+            layoutVersion = CurrentLayoutVersion;
             MarkSceneDirty();
         }
 
@@ -173,8 +236,11 @@ namespace GroundRumble
                 return;
             }
 
+            existing.gameObject.SetActive(false);
+
             if (Application.isPlaying)
             {
+                existing.name = $"{generatedRootName}_Obsoleto";
                 Destroy(existing.gameObject);
             }
             else
@@ -224,6 +290,12 @@ namespace GroundRumble
             {
                 columnMaterial = MaterialFactory.CreateLitMaterial(new Color(0.3f, 0.62f, 0.45f, 1f), 0.35f);
                 columnMaterial.name = "Columna";
+            }
+
+            if (rampMaterial == null)
+            {
+                rampMaterial = MaterialFactory.CreateLitMaterial(new Color(0.5f, 0.48f, 0.45f, 1f), 0.08f);
+                rampMaterial.name = "Rampa";
             }
         }
 
@@ -281,6 +353,11 @@ namespace GroundRumble
                     ceilingMaterial);
             }
 
+            if (index > 0 && generateRamps)
+            {
+                CreateRampBetweenFloors(floor.transform, GetHoleCorner(index - 1));
+            }
+
             BuildWall(floor.transform, WallSide.North);
             BuildWall(floor.transform, WallSide.South);
             BuildWall(floor.transform, WallSide.East);
@@ -303,12 +380,13 @@ namespace GroundRumble
             return (HoleCorner)value;
         }
 
-        private void CreateSlabWithHole(string name, Transform parent, float centerY, float thickness, Material material, HoleCorner corner)
+        private void GetHoleLayout(HoleCorner corner, out float centerX, out float centerZ, out float size)
         {
             float halfWidth = floorWidth * 0.5f;
             float halfDepth = floorDepth * 0.5f;
             float maxHole = Mathf.Min(floorWidth, floorDepth) - 1.2f;
-            float size = Mathf.Clamp(holeSize, 1.2f, Mathf.Max(1.2f, maxHole));
+            size = Mathf.Clamp(holeSize, 1.2f, Mathf.Max(1.2f, maxHole));
+
             float maxMarginX = Mathf.Max(0.1f, halfWidth - size * 0.5f - 0.1f);
             float maxMarginZ = Mathf.Max(0.1f, halfDepth - size * 0.5f - 0.1f);
             float marginX = Mathf.Clamp(holeMarginFromWall, 0.1f, maxMarginX);
@@ -319,8 +397,15 @@ namespace GroundRumble
             float signX = right ? 1f : -1f;
             float signZ = top ? 1f : -1f;
 
-            float holeCenterX = signX * (halfWidth - marginX - size * 0.5f);
-            float holeCenterZ = signZ * (halfDepth - marginZ - size * 0.5f);
+            centerX = signX * (halfWidth - marginX - size * 0.5f);
+            centerZ = signZ * (halfDepth - marginZ - size * 0.5f);
+        }
+
+        private void CreateSlabWithHole(string name, Transform parent, float centerY, float thickness, Material material, HoleCorner corner)
+        {
+            GetHoleLayout(corner, out float holeCenterX, out float holeCenterZ, out float size);
+            float halfWidth = floorWidth * 0.5f;
+            float halfDepth = floorDepth * 0.5f;
             float holeMinX = holeCenterX - size * 0.5f;
             float holeMaxX = holeCenterX + size * 0.5f;
             float holeMinZ = holeCenterZ - size * 0.5f;
@@ -377,6 +462,84 @@ namespace GroundRumble
                     new Vector3((holeMaxX + halfWidth) * 0.5f, 0f, holeCenterZ),
                     new Vector3(eastWidth, thickness, bandDepth),
                     material);
+            }
+        }
+
+        private void CreateRampBetweenFloors(Transform floor, HoleCorner corner)
+        {
+            GetHoleLayout(corner, out float holeCenterX, out float holeCenterZ, out float holeSizeValue);
+
+            bool right = corner == HoleCorner.TopRight || corner == HoleCorner.BottomRight;
+            float signX = right ? 1f : -1f;
+            float angleDegrees = Mathf.Clamp(rampAngle, 15f, 42f);
+            float angleRadians = angleDegrees * Mathf.Deg2Rad;
+            float horizontalRun = floorHeight / Mathf.Tan(angleRadians);
+            float slopeLength = floorHeight / Mathf.Sin(angleRadians);
+
+            Vector3 direction = new Vector3(-signX, 0f, 0f);
+            Vector3 topEdge = new Vector3(
+                holeCenterX - signX * holeSizeValue * 0.5f,
+                slabThickness,
+                holeCenterZ);
+            Vector3 bottomEdge = topEdge + direction * horizontalRun + Vector3.down * floorHeight;
+
+            Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up)
+                * Quaternion.Euler(angleDegrees, 0f, 0f);
+            Vector3 normal = rotation * Vector3.up;
+            Vector3 surfaceMiddle = (topEdge + bottomEdge) * 0.5f;
+            Vector3 center = surfaceMiddle - normal * (rampThickness * 0.5f);
+
+            GameObject ramp = CreateBox(
+                "Rampa_Piso",
+                floor,
+                center,
+                new Vector3(rampWidth, rampThickness, slopeLength),
+                rampMaterial);
+            ramp.transform.localRotation = rotation;
+
+            Vector3 railOffset = rotation * Vector3.right;
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Vector3 railCenter = surfaceMiddle
+                    + railOffset * (side * (rampWidth * 0.5f - 0.06f))
+                    + normal * (rampRailHeight * 0.5f);
+
+                GameObject rail = CreateBox(
+                    $"Rampa_Borde_{(side < 0 ? "Izq" : "Der")}",
+                    floor,
+                    railCenter,
+                    new Vector3(0.12f, rampRailHeight, slopeLength),
+                    rampMaterial);
+                rail.transform.localRotation = rotation;
+            }
+
+            float lowerFloorY = slabThickness - floorHeight;
+
+            for (int i = 0; i < 2; i++)
+            {
+                float t = i == 0 ? 0.4f : 0.8f;
+                Vector3 point = topEdge + direction * (horizontalRun * t) + Vector3.down * (floorHeight * t);
+                float supportHeight = point.y - lowerFloorY;
+
+                if (supportHeight <= 0.05f)
+                {
+                    continue;
+                }
+
+                GameObject support = CreateBox(
+                    "Rampa_Soporte",
+                    floor,
+                    new Vector3(point.x, lowerFloorY + supportHeight * 0.5f, point.z),
+                    new Vector3(0.24f, supportHeight, 0.24f),
+                    rampMaterial);
+
+                Collider collider = support.GetComponent<Collider>();
+
+                if (collider != null)
+                {
+                    collider.enabled = false;
+                }
             }
         }
 

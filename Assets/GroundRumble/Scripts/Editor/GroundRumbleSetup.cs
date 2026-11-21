@@ -20,7 +20,7 @@ namespace GroundRumble.EditorTools
         private const string TmpFontPath = "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset";
 
         private const int BuildingFloors = 30;
-        private const float BuildingFloorHeight = 3.6f;
+        private const float BuildingFloorHeight = GameSettings.FloorHeight;
         private const float BuildingWidth = 42f;
         private const float BuildingDepth = 36f;
         private const int BuildingWindows = 4;
@@ -38,6 +38,7 @@ namespace GroundRumble.EditorTools
             public Material Debris;
             public Material Column;
             public Material Exit;
+            public Material Ramp;
         }
 
         [MenuItem("Ground Rumble/Configurar escena completa", false, 1)]
@@ -135,7 +136,8 @@ namespace GroundRumble.EditorTools
                 Shards = GetOrCreateMaterial("Anico_Vidrio", MaterialFactory.CreateGlassShardMaterial),
                 Debris = GetOrCreateMaterial("Escombro", () => MaterialFactory.CreateLitMaterial(new Color(0.42f, 0.4f, 0.37f, 1f), 0.05f)),
                 Column = GetOrCreateMaterial("Columna", () => MaterialFactory.CreateLitMaterial(new Color(0.3f, 0.62f, 0.45f, 1f), 0.35f)),
-                Exit = GetOrCreateMaterial("Salida", () => MaterialFactory.CreateLitMaterial(new Color(0.1f, 0.9f, 0.35f, 1f), 0.3f))
+                Exit = GetOrCreateMaterial("Salida", () => MaterialFactory.CreateLitMaterial(new Color(0.1f, 0.9f, 0.35f, 1f), 0.3f)),
+                Ramp = GetOrCreateMaterial("Rampa", () => MaterialFactory.CreateLitMaterial(new Color(0.5f, 0.48f, 0.45f, 1f), 0.08f))
             };
         }
 
@@ -330,7 +332,8 @@ namespace GroundRumble.EditorTools
                 materials.Glass,
                 materials.Shards,
                 materials.Debris,
-                materials.Exit);
+                materials.Exit,
+                materials.Ramp);
 
             generator.SetColumnMaterial(materials.Column);
         }

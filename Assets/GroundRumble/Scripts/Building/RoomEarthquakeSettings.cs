@@ -14,7 +14,7 @@ namespace GroundRumble
         [SerializeField] private bool enableDebris = true;
         [SerializeField] private int debrisCount = 10;
         [SerializeField] private float spawnRadius = 4f;
-        [SerializeField] private float spawnHeight = 2.9f;
+        [SerializeField] private float spawnHeight = GameSettings.FloorHeight - 0.8f;
         [SerializeField] private float minSize = 0.2f;
         [SerializeField] private float maxSize = 0.55f;
         [SerializeField] private float debrisMinDamage = 5f;

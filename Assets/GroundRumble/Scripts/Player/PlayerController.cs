@@ -37,10 +37,13 @@ namespace GroundRumble
         [SerializeField] private float slipLockDuration = 2f;
         [SerializeField] private float slipKnockback = 3.5f;
 
+        [Header("Salto")]
+        [SerializeField] private float jumpBufferTime = 0.15f;
+        [SerializeField] private float coyoteTime = 0.12f;
+
         [Header("Caidas")]
         [SerializeField] private float fallDamageMinHeight = 2.5f;
-        [Range(0f, 1f)]
-        [SerializeField] private float fallDamagePercent = 0.5f;
+        [SerializeField] private float fallDamagePerMeter = 18f;
         [SerializeField] private float fallStunDuration = 6f;
 
         [Header("Referencias")]
@@ -51,7 +54,7 @@ namespace GroundRumble
 
         [Header("Depuracion")]
         [SerializeField] private bool enableFloorTeleport = true;
-        [SerializeField] private float floorHeight = 3.6f;
+        [SerializeField] private float floorHeight = GameSettings.FloorHeight;
 
         private CharacterController characterController;
         private InputSystem_Actions inputActions;
@@ -70,8 +73,8 @@ namespace GroundRumble
         private Vector3 slipVelocity;
         private float fallPeakY;
         private bool wasGrounded;
-        private bool dangerousFallPending;
-        private float dangerousFallTimer;
+        private float jumpBufferTimer;
+        private float coyoteTimer;
 
         public bool IsCrouching => isCrouching;
         public bool IsSprinting => isSprinting;
@@ -109,6 +112,11 @@ namespace GroundRumble
         {
             sprintSpeed = Mathf.Max(walkSpeed, speed);
             floorHeight = Mathf.Max(0.1f, floorHeightValue);
+        }
+
+        public void ConfigureFloorHeight(float height)
+        {
+            floorHeight = Mathf.Max(0.1f, height);
         }
 
         private void OnEnable()
@@ -164,6 +172,20 @@ namespace GroundRumble
 
             isGrounded = characterController.isGrounded;
             UpdateFallState();
+
+            if (jumpBufferTimer > 0f)
+            {
+                jumpBufferTimer = Mathf.Max(0f, jumpBufferTimer - Time.deltaTime);
+            }
+
+            if (jumpBufferTimer > 0f && coyoteTimer > 0f && !isCrouching && controlEnabled && !IsSlipping)
+            {
+                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                jumpBufferTimer = 0f;
+                coyoteTimer = 0f;
+                isGrounded = false;
+                wasGrounded = false;
+            }
 
             if (isGrounded && velocity.y < 0f)
             {
@@ -383,42 +405,33 @@ namespace GroundRumble
             velocity.y = 0f;
             fallPeakY = transform.position.y;
             wasGrounded = true;
-            dangerousFallPending = false;
-            dangerousFallTimer = 0f;
+            jumpBufferTimer = 0f;
+            coyoteTimer = coyoteTime;
         }
 
         public void MarkDangerousFall()
         {
-            dangerousFallPending = true;
-            dangerousFallTimer = 2f;
+            fallPeakY = transform.position.y;
+            wasGrounded = true;
         }
 
         private void UpdateFallState()
         {
             if (isGrounded)
             {
-                if (!wasGrounded && dangerousFallPending)
+                if (!wasGrounded)
                 {
-                    if (fallPeakY - transform.position.y >= fallDamageMinHeight)
-                    {
-                        ApplyFallPenalty();
-                    }
+                    float fallDistance = fallPeakY - transform.position.y;
 
-                    dangerousFallPending = false;
+                    if (fallDistance >= fallDamageMinHeight)
+                    {
+                        ApplyFallPenalty(fallDistance);
+                    }
                 }
 
                 fallPeakY = transform.position.y;
                 wasGrounded = true;
-
-                if (dangerousFallPending)
-                {
-                    dangerousFallTimer -= Time.deltaTime;
-
-                    if (dangerousFallTimer <= 0f)
-                    {
-                        dangerousFallPending = false;
-                    }
-                }
+                coyoteTimer = coyoteTime;
             }
             else
             {
@@ -429,14 +442,20 @@ namespace GroundRumble
 
                 fallPeakY = Mathf.Max(fallPeakY, transform.position.y);
                 wasGrounded = false;
+                coyoteTimer = Mathf.Max(0f, coyoteTimer - Time.deltaTime);
             }
         }
 
-        private void ApplyFallPenalty()
+        private void ApplyFallPenalty(float fallDistance)
         {
-            dangerousFallPending = false;
-            dangerousFallTimer = 0f;
-            slipLockTimer = Mathf.Max(slipLockTimer, fallStunDuration);
+            float excess = Mathf.Max(0f, fallDistance - fallDamageMinHeight);
+            float damage = excess * Mathf.Max(0f, fallDamagePerMeter);
+            float stun = Mathf.Clamp(
+                fallStunDuration * excess / Mathf.Max(0.1f, fallDamageMinHeight),
+                0.35f,
+                Mathf.Max(0.35f, fallStunDuration));
+
+            slipLockTimer = Mathf.Max(slipLockTimer, stun);
             slipVelocity = Vector3.zero;
             isSprinting = false;
             sprintHeld = false;
@@ -449,12 +468,12 @@ namespace GroundRumble
 
             if (cameraShake != null)
             {
-                cameraShake.PlayFallStun(fallStunDuration);
+                cameraShake.PlayFallStun(stun);
             }
 
             if (health != null)
             {
-                health.ApplyDamage(health.MaxHealth * fallDamagePercent, true);
+                health.ApplyDamage(damage, true);
             }
         }
 
@@ -466,6 +485,7 @@ namespace GroundRumble
             {
                 moveInput = Vector2.zero;
                 sprintHeld = false;
+                jumpBufferTimer = 0f;
                 stamina?.StopSprint();
             }
         }
@@ -521,10 +541,12 @@ namespace GroundRumble
 
         public void OnJump(InputAction.CallbackContext context)
         {
-            if (context.performed && isGrounded && !isCrouching && controlEnabled && !IsSlipping)
+            if (!context.performed || !controlEnabled || isCrouching || IsSlipping)
             {
-                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                return;
             }
+
+            jumpBufferTimer = jumpBufferTime;
         }
 
         public void OnPrevious(InputAction.CallbackContext context)

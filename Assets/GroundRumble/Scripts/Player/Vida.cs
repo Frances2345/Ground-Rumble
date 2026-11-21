@@ -162,6 +162,12 @@ namespace GroundRumble
             quakeDamagePerSecond = Mathf.Max(0f, damagePerSecond);
         }
 
+        public void SetSpawnPoint(Vector3 position, Quaternion rotation)
+        {
+            spawnPosition = position;
+            spawnRotation = rotation;
+        }
+
         public void RestoreFull()
         {
             IsDead = false;
