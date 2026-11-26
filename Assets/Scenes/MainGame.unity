@@ -156482,7 +156482,7 @@ MonoBehaviour:
   rampMaterial: {fileID: 2100000, guid: e2102054d63045cdbf6e6134b219df85, type: 2}
   rampPrefab: {fileID: 1782563409178256340, guid: cf35675d450d4a31b3617a196abb5405, type: 3}
   floorCount: 30
-  floorHeight: 3.6
+  floorHeight: 3.96
   floorWidth: 42
   floorDepth: 36
   slabThickness: 0.25
