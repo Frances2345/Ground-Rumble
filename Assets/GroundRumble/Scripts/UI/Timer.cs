@@ -12,6 +12,11 @@ namespace GroundRumble
         [Header("UI (asignar en el inspector)")]
         public TMP_Text timerText;
 
+        [Header("Registro de partidas")]
+        [SerializeField] private bool recordRoundOnDeath = true;
+
+        private float selectedMagnitude;
+
         public float Duration => duration;
         public float TimeLeft { get; private set; }
         public bool IsRunning { get; private set; }
@@ -24,6 +29,7 @@ namespace GroundRumble
         private void Awake()
         {
             TimeLeft = Mathf.Max(0f, duration);
+            selectedMagnitude = GameSettings.EarthquakeMagnitude;
             ResolveReferences();
             UpdateTimerText();
         }
@@ -126,6 +132,12 @@ namespace GroundRumble
 
             HasDied = true;
             IsRunning = false;
+
+            if (recordRoundOnDeath)
+            {
+                RoundRecords.AddRound(selectedMagnitude, TimeLeft);
+            }
+
             UpdateTimerText();
 
             // Dispara la muerte centralizada en Estado -> Options
