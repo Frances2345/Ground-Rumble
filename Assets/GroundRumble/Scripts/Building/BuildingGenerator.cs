@@ -1029,6 +1029,11 @@ namespace GroundRumble
                 scale,
                 glassMaterial);
 
+            if (window == null)
+            {
+                return;
+            }
+
             Renderer renderer = window.GetComponent<Renderer>();
 
             if (renderer != null)
@@ -1065,12 +1070,17 @@ namespace GroundRumble
 
         private GameObject CreateBox(string name, Transform parent, Vector3 localPosition, Vector3 localScale, Material material)
         {
+            Vector3 safeScale = new Vector3(
+                Mathf.Max(0.001f, Mathf.Abs(localScale.x)),
+                Mathf.Max(0.001f, Mathf.Abs(localScale.y)),
+                Mathf.Max(0.001f, Mathf.Abs(localScale.z)));
+
             GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
             box.name = name;
             box.transform.SetParent(parent, false);
             box.transform.localPosition = localPosition;
             box.transform.localRotation = Quaternion.identity;
-            box.transform.localScale = localScale;
+            box.transform.localScale = safeScale;
 
             Renderer renderer = box.GetComponent<Renderer>();
 
