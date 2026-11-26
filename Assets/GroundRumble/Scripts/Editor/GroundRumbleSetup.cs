@@ -17,6 +17,7 @@ namespace GroundRumble.EditorTools
         private const string PrefabsFolder = "Assets/GroundRumble/Prefabs";
         private const string PlayerPrefabPath = PrefabsFolder + "/Jugador.prefab";
         private const string ColumnPrefabPath = PrefabsFolder + "/Columna.prefab";
+        private const string RampPrefabPath = PrefabsFolder + "/Rampa.prefab";
         private const string TmpFontPath = "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset";
 
         private const int BuildingFloors = 30;
@@ -314,6 +315,7 @@ namespace GroundRumble.EditorTools
         {
             ApplyMaterials(generator, materials);
             generator.SetColumnPrefab(EnsureColumnPrefab(materials.Column));
+            generator.SetRampPrefab(EnsureRampPrefab(materials.Ramp));
             generator.ConfigureLayout(
                 BuildingFloors,
                 BuildingFloorHeight,
@@ -381,6 +383,42 @@ namespace GroundRumble.EditorTools
             UnityEngine.Object.DestroyImmediate(temp);
 
             return prefab != null ? prefab : AssetDatabase.LoadAssetAtPath<GameObject>(ColumnPrefabPath);
+        }
+
+        private static GameObject EnsureRampPrefab(Material material)
+        {
+            EnsurePrefabsFolder();
+
+            GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(RampPrefabPath);
+
+            if (existing != null)
+            {
+                GameObject contents = PrefabUtility.LoadPrefabContents(RampPrefabPath);
+                Renderer renderer = contents.GetComponent<Renderer>();
+
+                if (renderer != null && material != null)
+                {
+                    renderer.sharedMaterial = material;
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(contents, RampPrefabPath);
+                PrefabUtility.UnloadPrefabContents(contents);
+                return AssetDatabase.LoadAssetAtPath<GameObject>(RampPrefabPath);
+            }
+
+            GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            temp.name = "Rampa";
+            Renderer tempRenderer = temp.GetComponent<Renderer>();
+
+            if (tempRenderer != null && material != null)
+            {
+                tempRenderer.sharedMaterial = material;
+            }
+
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(temp, RampPrefabPath);
+            UnityEngine.Object.DestroyImmediate(temp);
+
+            return prefab != null ? prefab : AssetDatabase.LoadAssetAtPath<GameObject>(RampPrefabPath);
         }
 
         private static bool EnsureTmpEssentials()

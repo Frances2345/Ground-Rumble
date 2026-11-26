@@ -9,7 +9,7 @@ namespace GroundRumble
     /// </summary>
     public class BuildingGenerator : MonoBehaviour
     {
-        private const int CurrentLayoutVersion = 2;
+        private const int CurrentLayoutVersion = 3;
 
         private enum WallSide
         {
@@ -30,11 +30,13 @@ namespace GroundRumble
         [Header("Rampas entre pisos")]
         [SerializeField] private bool generateRamps = true;
         [Range(15f, 42f)]
-        [SerializeField] private float rampAngle = 34f;
-        [SerializeField] private float rampWidth = 2.2f;
+        [SerializeField] private float rampAngle = 42f;
+        [SerializeField] private float rampWidth = 3.4f;
         [SerializeField] private float rampThickness = 0.28f;
         [SerializeField] private float rampRailHeight = 0.3f;
+        [Tooltip("Solo como reserva si falta el prefab; nunca se crea por codigo.")]
         [SerializeField] private Material rampMaterial;
+        [SerializeField] private GameObject rampPrefab;
 
         [Header("Dimensiones")]
         [SerializeField] private int floorCount = 30;
@@ -46,8 +48,8 @@ namespace GroundRumble
 
         [Header("Hueco para bajar")]
         [SerializeField] private bool generateFloorHoles = true;
-        [SerializeField] private float holeSize = 3f;
-        [SerializeField] private float holeMarginFromWall = 0.5f;
+        [SerializeField] private float holeSize = 4f;
+        [SerializeField] private float holeMarginFromWall = 1f;
 
         [Header("Columnas / zonas seguras")]
         [SerializeField] private bool generateSafeColumns = true;
@@ -133,6 +135,11 @@ namespace GroundRumble
         public void SetColumnPrefab(GameObject prefab)
         {
             columnPrefab = prefab;
+        }
+
+        public void SetRampPrefab(GameObject prefab)
+        {
+            rampPrefab = prefab;
         }
 
         /// <summary>
@@ -292,11 +299,8 @@ namespace GroundRumble
                 columnMaterial.name = "Columna";
             }
 
-            if (rampMaterial == null)
-            {
-                rampMaterial = MaterialFactory.CreateLitMaterial(new Color(0.5f, 0.48f, 0.45f, 1f), 0.08f);
-                rampMaterial.name = "Rampa";
-            }
+            // El material de la rampa nunca se genera en codigo: la rampa es el
+            // prefab Rampa.prefab y todos sus hijos usan Rampa.mat (el asset).
         }
 
         private void BuildFloor(Transform buildingRoot, int index)
@@ -477,8 +481,13 @@ namespace GroundRumble
             float slopeLength = floorHeight / Mathf.Sin(angleRadians);
 
             Vector3 direction = new Vector3(-signX, 0f, 0f);
+
+            // El borde superior va en el borde EXTERIOR del hueco (junto a la pared)
+            // para que la rampa pase por debajo del hueco: al caer por el hueco caes
+            // sobre la rampa y te deslizas al piso de abajo; subiendo sales por el
+            // lado de la pared al nivel de la losa.
             Vector3 topEdge = new Vector3(
-                holeCenterX - signX * holeSizeValue * 0.5f,
+                holeCenterX + signX * holeSizeValue * 0.5f,
                 slabThickness,
                 holeCenterZ);
             Vector3 bottomEdge = topEdge + direction * horizontalRun + Vector3.down * floorHeight;
@@ -489,13 +498,16 @@ namespace GroundRumble
             Vector3 surfaceMiddle = (topEdge + bottomEdge) * 0.5f;
             Vector3 center = surfaceMiddle - normal * (rampThickness * 0.5f);
 
-            GameObject ramp = CreateBox(
-                "Rampa_Piso",
+            GameObject ramp = CreateRampPlank(
                 floor,
                 center,
-                new Vector3(rampWidth, rampThickness, slopeLength),
-                rampMaterial);
-            ramp.transform.localRotation = rotation;
+                rotation,
+                new Vector3(rampWidth, rampThickness, slopeLength));
+
+            // Bordes y soportes usan el material del propio prefab (Rampa.mat);
+            // aqui no se crea ningun material.
+            Renderer rampRenderer = ramp.GetComponent<Renderer>();
+            Material plankMaterial = rampRenderer != null ? rampRenderer.sharedMaterial : rampMaterial;
 
             Vector3 railOffset = rotation * Vector3.right;
 
@@ -510,17 +522,24 @@ namespace GroundRumble
                     floor,
                     railCenter,
                     new Vector3(0.12f, rampRailHeight, slopeLength),
-                    rampMaterial);
+                    plankMaterial);
                 rail.transform.localRotation = rotation;
             }
 
             float lowerFloorY = slabThickness - floorHeight;
 
-            for (int i = 0; i < 2; i++)
+            // Con el hueco casi tan largo como el recorrido horizontal, la rampa
+            // apoya en ambos bordes del hueco; los postes bajan por la boca hasta
+            // la losa del piso de abajo, que en esta esquina siempre es solida
+            // (el hueco rota de esquina en cada piso).
+            float verticalThickness = rampThickness * Mathf.Cos(angleRadians);
+            float[] supportTs = { 0.45f, 0.8f };
+
+            for (int i = 0; i < supportTs.Length; i++)
             {
-                float t = i == 0 ? 0.4f : 0.8f;
+                float t = supportTs[i];
                 Vector3 point = topEdge + direction * (horizontalRun * t) + Vector3.down * (floorHeight * t);
-                float supportHeight = point.y - lowerFloorY;
+                float supportHeight = point.y - verticalThickness - lowerFloorY;
 
                 if (supportHeight <= 0.05f)
                 {
@@ -532,7 +551,7 @@ namespace GroundRumble
                     floor,
                     new Vector3(point.x, lowerFloorY + supportHeight * 0.5f, point.z),
                     new Vector3(0.24f, supportHeight, 0.24f),
-                    rampMaterial);
+                    plankMaterial);
 
                 Collider collider = support.GetComponent<Collider>();
 
@@ -541,6 +560,37 @@ namespace GroundRumble
                     collider.enabled = false;
                 }
             }
+        }
+
+        private GameObject CreateRampPlank(Transform floor, Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
+        {
+            GameObject ramp;
+
+            if (rampPrefab == null)
+            {
+                ramp = CreateBox("Rampa_Piso", floor, localPosition, localScale, rampMaterial);
+                ramp.transform.localRotation = localRotation;
+                return ramp;
+            }
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                ramp = (GameObject)UnityEditor.PrefabUtility.InstantiatePrefab(rampPrefab, floor);
+            }
+            else
+            {
+                ramp = Instantiate(rampPrefab, floor);
+            }
+#else
+            ramp = Instantiate(rampPrefab, floor);
+#endif
+
+            ramp.name = "Rampa_Piso";
+            ramp.transform.localPosition = localPosition;
+            ramp.transform.localRotation = localRotation;
+            ramp.transform.localScale = localScale;
+            return ramp;
         }
 
         private void CreateSafeColumns(Transform floor)

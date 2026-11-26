@@ -155286,6 +155286,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3179f130a96276e4a881a197ea0bd0ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GroundRumble.BuildingGenerator
+  generateRamps: 1
+  rampAngle: 42
+  rampWidth: 3.4
+  rampThickness: 0.28
+  rampRailHeight: 0.3
+  rampMaterial: {fileID: 2100000, guid: e2102054d63045cdbf6e6134b219df85, type: 2}
+  rampPrefab: {fileID: 1782563409178256340, guid: cf35675d450d4a31b3617a196abb5405, type: 3}
   floorCount: 30
   floorHeight: 3.6
   floorWidth: 42
@@ -155293,8 +155300,8 @@ MonoBehaviour:
   slabThickness: 0.25
   wallThickness: 0.2
   generateFloorHoles: 1
-  holeSize: 2.6
-  holeMarginFromWall: 0.45
+  holeSize: 4
+  holeMarginFromWall: 1
   generateSafeColumns: 1
   columnOffsetX: 19.8
   columnOffsetZ: 16.2
