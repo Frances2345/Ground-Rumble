@@ -9,7 +9,7 @@ namespace GroundRumble
     /// </summary>
     public class BuildingGenerator : MonoBehaviour
     {
-        private const int CurrentLayoutVersion = 3;
+        private const int CurrentLayoutVersion = 5;
 
         private enum WallSide
         {
@@ -76,6 +76,12 @@ namespace GroundRumble
         [SerializeField] private float windowBreakRadius = 5f;
         [SerializeField] private float windowBreakChance = 0.35f;
         [SerializeField] private int windowShardCount = 10;
+
+        [Header("Oficinas interiores")]
+        [SerializeField] private bool generateOfficeRooms = true;
+        [SerializeField] private float officeWallThickness = 0.16f;
+        [SerializeField] private float officeDoorWidth = 2.8f;
+        [SerializeField] private float officeDoorHeight = 2.2f;
 
         [Header("Eventos por cuarto")]
         [SerializeField] private int debrisCountPerRoom = 10;
@@ -168,7 +174,17 @@ namespace GroundRumble
 
         private void Start()
         {
-            if (!Application.isPlaying || layoutVersion >= CurrentLayoutVersion)
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            bool outdatedLayout = layoutVersion < CurrentLayoutVersion;
+            Transform generated = transform.Find(generatedRootName);
+            bool missingGenerated = generated == null;
+            bool missingOffices = generated != null && generated.GetComponentInChildren<Transform>().name != null && generated.Find("Piso_01/Oficina_Frente_N") == null;
+
+            if (!outdatedLayout && !missingGenerated && !missingOffices)
             {
                 return;
             }
@@ -177,7 +193,7 @@ namespace GroundRumble
             ConfigureLayout(floorCount, floorHeight, floorWidth, floorDepth, windowsPerWall, fullGlassWallChance);
             Generate();
             RepositionPlayer();
-            Debug.Log("Ground Rumble: edificio regenerado con rampas y altura de piso actualizada.");
+            Debug.Log("Ground Rumble: edificio regenerado con oficinas/layout actualizado.");
         }
 
         private void RepositionPlayer()
@@ -370,6 +386,11 @@ namespace GroundRumble
             if (generateSafeColumns)
             {
                 CreateSafeColumns(floor.transform);
+            }
+
+            if (generateOfficeRooms)
+            {
+                CreateOfficeRooms(floor.transform, index);
             }
 
             if (index == 0 && generateExit)
@@ -661,6 +682,131 @@ namespace GroundRumble
             primitive.name = $"Columna_{suffix}";
             primitive.transform.SetParent(parent, false);
             return primitive;
+        }
+
+        private void CreateOfficeRooms(Transform floor, int floorIndex)
+        {
+            float wallHeight = floorHeight - 2f * slabThickness;
+            float centerY = floorHeight * 0.5f;
+            float halfWidth = floorWidth * 0.5f;
+            float halfDepth = floorDepth * 0.5f;
+            float margin = 1.8f;
+            float doorW = Mathf.Clamp(officeDoorWidth, 2.6f, 3.2f);
+            float doorH = Mathf.Clamp(officeDoorHeight, 2.1f, wallHeight - 0.15f);
+            float corridorHalfDepth = Mathf.Clamp(floorDepth * 0.1f, 2.4f, 3f);
+            float roomDepth = halfDepth - corridorHalfDepth - margin;
+
+            if (roomDepth < 5.5f)
+            {
+                return;
+            }
+
+            bool hasHole = floorIndex > 0 && generateFloorHoles;
+            float holeX = 0f, holeZ = 0f, holeS = 0f;
+            if (hasHole)
+            {
+                GetHoleLayout(GetHoleCorner(floorIndex - 1), out holeX, out holeZ, out holeS);
+            }
+
+            bool HoleIntersects(Vector3 center, Vector3 size)
+            {
+                if (!hasHole) return false;
+                float pad = holeS * 0.5f + 0.8f;
+                return Mathf.Abs(center.x - holeX) < (size.x * 0.5f + pad) &&
+                       Mathf.Abs(center.z - holeZ) < (size.z * 0.5f + pad);
+            }
+
+            float wallSpanX = floorWidth - margin * 2f;
+            float northZ = corridorHalfDepth;
+            float southZ = -corridorHalfDepth;
+            float northCenterZ = corridorHalfDepth + roomDepth * 0.5f;
+            float southCenterZ = -northCenterZ;
+
+            // Paredes frontales al pasillo con puerta centrada.
+            BuildOfficeWall(floor, "Oficina_Frente_N", new Vector3(0f, centerY, northZ),
+                new Vector3(wallSpanX, wallHeight, officeWallThickness), true, doorW, doorH, 0f, HoleIntersects);
+            BuildOfficeWall(floor, "Oficina_Frente_S", new Vector3(0f, centerY, southZ),
+                new Vector3(wallSpanX, wallHeight, officeWallThickness), true, doorW, doorH, 0f, HoleIntersects);
+
+            // División en 2 cuartos grandes por banda.
+            BuildOfficeWall(floor, "Oficina_Div_N", new Vector3(0f, centerY, northCenterZ),
+                new Vector3(officeWallThickness, wallHeight, roomDepth - 0.1f), false, doorW, doorH, 0f, HoleIntersects);
+            BuildOfficeWall(floor, "Oficina_Div_S", new Vector3(0f, centerY, southCenterZ),
+                new Vector3(officeWallThickness, wallHeight, roomDepth - 0.1f), false, doorW, doorH, 0f, HoleIntersects);
+        }
+
+        private void BuildOfficeWall(Transform floor, string name, Vector3 center, Vector3 size, bool doorAlongX, float doorWidth, float doorHeight, float doorOffset, System.Func<Vector3, Vector3, bool> intersectsHole)
+        {
+            if (size.x <= 0.1f || size.y <= 0.1f || size.z <= 0.1f || intersectsHole(center, size))
+            {
+                return;
+            }
+
+            if (doorWidth <= 0f || doorHeight <= 0f)
+            {
+                CreateBox(name, floor, center, size, wallMaterial);
+                return;
+            }
+
+            BuildInteriorWallWithDoor(floor, name, center, size, doorWidth, doorHeight, doorAlongX, doorOffset);
+        }
+
+        private void BuildInteriorWallWithDoor(Transform parent, string name, Vector3 center, Vector3 size, float doorWidth, float doorHeight, bool doorAlongX, float doorOffset)
+        {
+            float wallHeight = size.y;
+            float wallBottom = center.y - wallHeight * 0.5f;
+            float clampedDoorHeight = Mathf.Clamp(doorHeight, 2f, wallHeight - 0.05f);
+            float topHeight = wallHeight - clampedDoorHeight;
+
+            float length = doorAlongX ? size.x : size.z;
+            float clampedDoorWidth = Mathf.Clamp(doorWidth, 2f, length - 1f);
+            float doorCenter = Mathf.Clamp(doorOffset, -length * 0.5f + clampedDoorWidth * 0.5f + 0.3f, length * 0.5f - clampedDoorWidth * 0.5f - 0.3f);
+            float doorMin = doorCenter - clampedDoorWidth * 0.5f;
+            float doorMax = doorCenter + clampedDoorWidth * 0.5f;
+
+            GameObject wall = new GameObject(name);
+            wall.transform.SetParent(parent, false);
+
+            if (topHeight > 0.01f)
+            {
+                Vector3 topSize = size;
+                if (doorAlongX) topSize.x = clampedDoorWidth; else topSize.z = clampedDoorWidth;
+                topSize.y = topHeight;
+                Vector3 topCenter = center;
+                if (doorAlongX) topCenter.x += doorCenter; else topCenter.z += doorCenter;
+                topCenter.y = wallBottom + clampedDoorHeight + topHeight * 0.5f;
+                CreateBox($"{name}_Dintel", wall.transform, topCenter, topSize, wallMaterial);
+            }
+
+            float start = -length * 0.5f;
+            float end = length * 0.5f;
+            CreateInteriorSegment(wall.transform, $"{name}_A", center, size, doorAlongX, start, doorMin, wallBottom, clampedDoorHeight);
+            CreateInteriorSegment(wall.transform, $"{name}_B", center, size, doorAlongX, doorMax, end, wallBottom, clampedDoorHeight);
+        }
+
+        private void CreateInteriorSegment(Transform parent, string name, Vector3 wallCenter, Vector3 wallSize, bool alongX, float segMin, float segMax, float wallBottom, float segHeight)
+        {
+            float length = segMax - segMin;
+            if (length <= 0.05f) return;
+
+            float mid = (segMin + segMax) * 0.5f;
+            Vector3 pos = wallCenter;
+            Vector3 scale = wallSize;
+
+            if (alongX)
+            {
+                pos.x = wallCenter.x + mid;
+                scale.x = length;
+            }
+            else
+            {
+                pos.z = wallCenter.z + mid;
+                scale.z = length;
+            }
+
+            pos.y = wallBottom + segHeight * 0.5f;
+            scale.y = segHeight;
+            CreateBox(name, parent, pos, scale, wallMaterial);
         }
 
         private void CreateLevelExit(Transform floor)
