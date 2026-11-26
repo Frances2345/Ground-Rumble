@@ -11,7 +11,7 @@ namespace GroundRumble
         public const float MinMagnitude = 1f;
         public const float MaxMagnitude = 9f;
         public const float DefaultMagnitude = 5.5f;
-        public const float FloorHeight = 3.96f;
+        public const float FloorHeight = 4.14f;
 
         private const string MagnitudeKey = "GroundRumble.EarthquakeMagnitude";
 

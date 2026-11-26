@@ -39,13 +39,12 @@ namespace GroundRumble
 
         [Header("Salto")]
         [SerializeField] private float jumpBufferTime = 0.15f;
-        [SerializeField] private float coyoteTime = 0.15f;
+        [SerializeField] private float coyoteTime = 0.12f;
 
         [Header("Caidas")]
-        [SerializeField] private float fallDamageMinHeight = 3.4f;
-        [SerializeField] private float fallDamagePerMeter = 14f;
+        [SerializeField] private float fallDamageMinHeight = 2.5f;
+        [SerializeField] private float fallDamagePerMeter = 18f;
         [SerializeField] private float fallStunDuration = 6f;
-        [SerializeField] private float fallDamageMinAirTime = 0.2f;
 
         [Header("Referencias")]
         [SerializeField] private Transform cameraPivot;
@@ -76,7 +75,6 @@ namespace GroundRumble
         private bool wasGrounded;
         private float jumpBufferTimer;
         private float coyoteTimer;
-        private float airborneTimer;
 
         public bool IsCrouching => isCrouching;
         public bool IsSprinting => isSprinting;
@@ -180,20 +178,13 @@ namespace GroundRumble
                 jumpBufferTimer = Mathf.Max(0f, jumpBufferTimer - Time.deltaTime);
             }
 
-            bool canJump = jumpBufferTimer > 0f
-                && !isCrouching
-                && controlEnabled
-                && !IsSlipping
-                && (coyoteTimer > 0f || characterController.isGrounded);
-
-            if (canJump)
+            if (jumpBufferTimer > 0f && coyoteTimer > 0f && !isCrouching && controlEnabled && !IsSlipping)
             {
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
                 jumpBufferTimer = 0f;
                 coyoteTimer = 0f;
                 isGrounded = false;
                 wasGrounded = false;
-                airborneTimer = 0f;
             }
 
             if (isGrounded && velocity.y < 0f)
@@ -432,7 +423,7 @@ namespace GroundRumble
                 {
                     float fallDistance = fallPeakY - transform.position.y;
 
-                    if (fallDistance >= fallDamageMinHeight && airborneTimer >= fallDamageMinAirTime)
+                    if (fallDistance >= fallDamageMinHeight)
                     {
                         ApplyFallPenalty(fallDistance);
                     }
@@ -440,7 +431,6 @@ namespace GroundRumble
 
                 fallPeakY = transform.position.y;
                 wasGrounded = true;
-                airborneTimer = 0f;
                 coyoteTimer = coyoteTime;
             }
             else
@@ -452,7 +442,6 @@ namespace GroundRumble
 
                 fallPeakY = Mathf.Max(fallPeakY, transform.position.y);
                 wasGrounded = false;
-                airborneTimer += Time.deltaTime;
                 coyoteTimer = Mathf.Max(0f, coyoteTimer - Time.deltaTime);
             }
         }
@@ -558,16 +547,6 @@ namespace GroundRumble
             }
 
             jumpBufferTimer = jumpBufferTime;
-
-            if (characterController.isGrounded || coyoteTimer > 0f)
-            {
-                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-                jumpBufferTimer = 0f;
-                coyoteTimer = 0f;
-                isGrounded = false;
-                wasGrounded = false;
-                airborneTimer = 0f;
-            }
         }
 
         public void OnPrevious(InputAction.CallbackContext context)
